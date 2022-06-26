@@ -16,7 +16,7 @@ def main(args: List) -> None:
     try:
         while True:
             read_list = client_socks + [server_sock]
-            ready_to_read, ready_to_write, in_error = select.select(read_list, client_socks, [])
+            ready_to_read, ready_to_write, in_error = select.select(read_list, client_socks, client_socks)
 
             for sock in ready_to_read:
                 if sock is server_sock:
