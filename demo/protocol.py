@@ -17,7 +17,7 @@ _MSG_TYPE_BYTES = 1
 _SIZE_BYTES = 4
 
 
-def read(sock: socket) -> Tuple['type', 'data']:
+def read(sock: socket.socket) -> Tuple['type', 'data']:
     version = sock.recv(_VER_BYTES)
     if version == b'':
         return EXIT, None
@@ -33,7 +33,7 @@ def read(sock: socket) -> Tuple['type', 'data']:
     return msg_type, sock.recv(size)
 
 
-def write(sock: socket, msg_type: int, data: bytes) -> None:
+def write(sock: socket.socket, msg_type: int, data: bytes) -> None:
     if msg_type not in (CREATE_KEYS, SIGN_DATA):
         raise ValueError("msg_type must be one of CREATE_KEYS, SIGN_DATA")
 

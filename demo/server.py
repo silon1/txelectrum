@@ -5,7 +5,7 @@ import argparse
 
 import protocol
 
-def main(args: List) -> None:
+def main(args: argparse.ArgumentParser) -> None:
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.bind((args.ip_addr, args.port))
     server_sock.listen()
