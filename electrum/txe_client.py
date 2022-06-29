@@ -30,6 +30,8 @@ def sign(data:bytes, password:str, pubkey:bytes) -> bytes:
     Sends the data to be signed in the TXE using the ECDSA secp256k1 algorithm.
     Returns the data's digital signature given by the TXE.
     IMPORTANT: The digital signature is not validated.
+
+    If the password is incorrect, then a TxeWrongPasswordException will be raised.
     """
 
     pass
