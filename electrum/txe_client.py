@@ -39,11 +39,11 @@ def create_keypair(password:str) -> bytes:
 
 def sign(data:bytes, password:str, pubkey:bytes) -> bytes:
     """
-    Sends the data to the TXE server for it to be signed with the
-    private key.
-    IMPORTANT: The digital signature is not validated.
+    Creates a new session with the TXE server and sends the data
+    for it to be signed with the private key.
 
     Returns the data's digital signature given by the TXE.
+    IMPORTANT: The digital signature is not validated.
 
     TxeWrongPasswordError will be thrown if the password is incorrect.
     TxeConnectionError will be thrown if the connection couldn't be made,
