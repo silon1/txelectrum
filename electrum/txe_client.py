@@ -4,7 +4,7 @@ in order to securely sign data using ECDSA secp256k1 algorithm.
 
 Usage:
 1. Create a new wallet:
-    pubkey = create_wallet(password)
+    pubkey = create_keypair(password)
 
 2. Sign a transaction:
     try:
@@ -14,10 +14,10 @@ Usage:
         # handle the exception
 """
 
-def create_wallet(password:str) -> bytes:
+def create_keypair(password:str) -> bytes:
     """
     Creates a new session with the TXE server
-    in order to create a new wallet.
+    in order to create a new key-pair.
 
     Returns the public key of the new wallet.
     """
