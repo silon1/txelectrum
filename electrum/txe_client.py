@@ -1,25 +1,37 @@
 """
-This module is a client that communicates with a TXE server
-in order to securely sign data using ECDSA secp256k1 algorithm.
+This module implements functions that communicate with a TXE server.
+By using this module an application can create a key-pair and sign
+data using the ECDSA secp256k1 algorithm. Signing data is protected
+with a password. Each function creates a new socket to communicate
+with the server and closes it.
 
-Usage:
+Example Usage:
 1. Create a new wallet:
-    pubkey = create_keypair(password)
+    try:
+        pubkey = create_keypair(password)
+    except TxeConnectionError:
+        # handle the exception
 
 2. Sign a transaction:
     try:
         sig = sign(transaction, password, pubkey)
         validate_sig(sig, pubkey) # Out of txe_client's responsibilities
-    except TxeWrongPasswordException:
+    except TxeWrongPasswordError:
+        # handle the exception
+    except TxeConnectionError:
         # handle the exception
 """
 
 def create_keypair(password:str) -> bytes:
     """
-    Creates a new session with the TXE server
-    in order to create a new key-pair.
+    Creates a new session with the TXE server and requests to create
+    a new key-pair using the ECSDA secp256k1 algorithm. The private key
+    will be protected with the given password.
 
-    Returns the public key of the new wallet.
+    Returns the created public key.
+
+    TxeConnectionError will be thrown if the connection couldn't be made,
+    or is closed before receiving the public key.
     """
 
     pass
@@ -27,15 +39,23 @@ def create_keypair(password:str) -> bytes:
 
 def sign(data:bytes, password:str, pubkey:bytes) -> bytes:
     """
-    Sends the data to be signed in the TXE using the ECDSA secp256k1 algorithm.
-    Returns the data's digital signature given by the TXE.
+    Sends the data to the TXE server for it to be signed with the
+    private key.
     IMPORTANT: The digital signature is not validated.
 
-    If the password is incorrect, then a TxeWrongPasswordException will be raised.
+    Returns the data's digital signature given by the TXE.
+
+    TxeWrongPasswordError will be thrown if the password is incorrect.
+    TxeConnectionError will be thrown if the connection couldn't be made,
+    or is closed before receiving the signature.
     """
 
     pass
 
 
-class TxeWrongPasswordException(Exception):
+class TxeWrongPasswordError(Exception):
+    pass
+
+
+class TxeWrongPasswordError(Exception):
     pass
