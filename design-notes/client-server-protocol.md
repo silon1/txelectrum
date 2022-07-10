@@ -59,10 +59,10 @@ The following table summarizes the fields' content:
 ## Sign a Buffer
 
 The client requests with Message Type 2 and adds the following fields in the paylod:
-* public key (32 bytes)
-* password digest (20 bytes)
-* hash function to use (1 byte)
-* buffer to sign (variable length)
+1. public key (32 bytes)
+2. password digest (20 bytes)
+3. hash function to use (1 byte)
+4. buffer to sign (variable length)
 
 The hash function field in the payload can have the following values:
 * 1 for SHA-1
