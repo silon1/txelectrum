@@ -25,11 +25,13 @@ TXE_SHA1 = 0
 TXE_SHA256 = 1
 TXE_SHA512 = 2
 
+
 """
 Number of times to request the server to sign again and validate the response
 when the first validation failed.
 """
 __TXE_NUM_VALIDATIONS = 10
+
 
 def create_keypair(password:str) -> bytes:
     """
@@ -65,8 +67,8 @@ def sign(buffer:bytes, hash_func:int, password:str, pubkey:bytes) -> bytes:
     Returns the buffer's digital signature.
 
     This function may throw the following exceptions:
-    * TxeMissingPrivateKey when the server couldn't find the key pair of
-    this public key.
+    * TxeMissingPrivateKeyError when the server couldn't find the key pair
+    of this public key.
     * TxeWrongPasswordError when the password is incorrect.
     * TxeValidationError when this function failed to validate the digital
     signature.
@@ -89,7 +91,7 @@ class TxeWrongPasswordError(TxeException):
     pass
 
 
-class TxeMissingPrivateKey(TxeException):
+class TxeMissingPrivateKeyError(TxeException):
     pass
 
 
