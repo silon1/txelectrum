@@ -20,7 +20,7 @@ password.
 
 ## Start a Connection
 
-The server will serve clients using a TCP socket on localhost:51841. (The port 51841
+The server will serve clients using a TCP socket on ```localhost:51841```. (The port 51841
 was chosen because it equals to crc-16 of 'txelectrum'.)
 
 ## Message Structure
