@@ -10,7 +10,6 @@ Example Usage:
         pubkey = create_keypair(password)
     except TxeException:
         # handle the exception
-
 * Sign a transaction:
     try:
         sig = sign(transaction, TXE_SHA256, password, pubkey)
@@ -27,6 +26,30 @@ TXE_SHA256 = 1
 TXE_SHA512 = 2
 
 
+# The design notes for the client-server protocol is found at ```design-notes/client-server-protocol.md```.
+
+
+from typing import Tuple
+import hashlib
+import socket
+
+
+__IP = '127.0.0.1'
+__PORT = 51841
+
+__CREATE_KEYS = 1
+__SIGN_BUFFER = 2
+__ERROR = 3
+
+__VERSION = 1
+__ENDIANESS = 'little'
+__VERSION_LENGTH = 4
+__MESSAGE_TYPE_LENGTH = 1
+__PAYLOAD_LENGTH_LENGTH = 4
+__PUBKEY_LENGTH = 32
+__HASH_FUNC_LENGTH = 1
+
+
 def create_keypair(password:str) -> bytes:
     """
     Requests the server to create a new key pair using the ECSDA secp256k1
@@ -38,7 +61,16 @@ def create_keypair(password:str) -> bytes:
     key from the server.
     """
 
-    pass
+    password_digest = hashlib.sha1(password.encode()).digest()
+    message_type, payload = __send_recv(__CREATE_KEYS, password_digest)
+
+    if message_type != __CREATE_KEYS:
+        raise TxeException(f"The server sent the message type {message_type} and not {__CREATE_KEYS}.")
+
+    if len(payload) != __PUBKEY_LENGTH:
+        raise TxeException(f"The server sent a payload with the length {len(payload)} and not {__PUBKEY_LENGTH}.")
+
+    return payload
 
 
 def sign(buffer:bytes, hash_func:int, password:str, pubkey:bytes) -> bytes:
@@ -69,7 +101,29 @@ def sign(buffer:bytes, hash_func:int, password:str, pubkey:bytes) -> bytes:
     from the server.
     """
 
-    pass
+    if hash_func not in (TXE_SHA1, TXE_SHA256, TXE_SHA512):
+        raise ValueError(f"Invalid hash func {hash_func}")
+
+    password_digest = hashlib.sha1(password.encode()).digest()
+    encoded_hash_func = hash_func.to_bytes(__HASH_FUNC_LENGTH, byteorder=__ENDIANESS)
+    payload = pubkey + password_digest + encoded_hash_func + buffer
+    
+    message_type, payload = __send_recv(__SIGN_BUFFER, payload)
+
+    if message_type == __SIGN_BUFFER:
+        # normal flow, the payload is the digital signature
+        return payload
+
+    if message_type == __ERROR:
+        # error flow, the payload contains the reason for the error
+        error_reason = int.from_bytes(payload, byteorder=__ENDIANESS)
+        if error_reason == 0:
+            raise TxeMissingPrivateKeyError()
+        if error_reason == 1:
+            raise TxeWrongPasswordError()
+        raise TxeException(f"The server sent an unexpected error reason {error_reason}")
+    
+    raise TxeException(f"The server sent an unexpected message type {message_type}")
 
 
 class TxeException(Exception):
@@ -83,4 +137,43 @@ class TxeWrongPasswordError(TxeException):
 class TxeMissingPrivateKeyError(TxeException):
     pass
 
+
+def __send_recv(message_type:int, payload:bytes) -> Tuple[int, bytes]:
+    """
+    This function sends a message to the server and returns the answer
+    from the server. The messages are according to the client-server
+    protocol (see the comment at top.) The returned values are the message
+    type and the payload.
+
+    This function may raise TxeException if the server sent a header not
+    according to the protocol.
+    """
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.connect((__IP, __PORT))
+
+        # sending the message
+        encoded_version = __VERSION.to_bytes(__VERSION_LENGTH, byteorder=__ENDIANESS)
+        encoded_message_type = message_type.to_bytes(__MESSAGE_TYPE_LENGTH, byteorder=__ENDIANESS)
+        encoded_length = len(payload).to_bytes(__PAYLOAD_LENGTH_LENGTH, byteorder=__ENDIANESS)
+        header = encoded_version + encoded_message_type + encoded_length
+
+        sock.send(header + payload)
+
+        # receiving the message
+        encoded_version = sock.recv(__VERSION_LENGTH)
+        version = int.from_bytes(encoded_version, byteorder=__ENDIANESS)
+
+        if version != __VERSION:
+            raise TxeException(f"The server sent the version {version} and not {__VERSION}")
+
+        encoded_message_type = sock.recv(__MESSAGE_TYPE_LENGTH)
+        message_type = int.from_bytes(__MESSAGE_TYPE_LENGTH, byteorder=__ENDIANESS)
+
+        encoded_length = sock.recv(__PAYLOAD_LENGTH_LENGTH)
+        length = int.from_bytes(__PAYLOAD_LENGTH_LENGTH, byteorder=__ENDIANESS)
+
+        payload = sock.recv(length)
+
+        return message_type, payload
 
