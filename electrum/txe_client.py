@@ -34,8 +34,8 @@ def create_keypair(password:str) -> bytes:
 
     Returns the created public key.
 
-    TxeConnectionError will be thrown if the connection couldn't be made,
-    or is closed before receiving the public key.
+    This function will raise TxeException if it cannot recieve the public
+    key from the server.
     """
 
     pass
@@ -61,22 +61,18 @@ def sign(buffer:bytes, hash_func:int, password:str, pubkey:bytes) -> bytes:
     the digital signautre. The caller MUST validate the digital signature
     for security.
 
-    This function may throw the following exceptions:
+    This function may raise the following exceptions:
     * TxeMissingPrivateKeyError when the server couldn't find the key pair
     of this public key.
     * TxeWrongPasswordError when the password is incorrect.
-    * TxeConnectionError when the connection couldn't be made or is
-    closed before receiving the signature.
+    * TxeException if this function cannot recieve the digital signature
+    from the server.
     """
 
     pass
 
 
 class TxeException(Exception):
-    pass
-
-
-class TxeConnectionError(TxeException):
     pass
 
 
