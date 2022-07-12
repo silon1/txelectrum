@@ -1,36 +1,35 @@
 import txe_client
 
 import unittest
-from unittest.mock import Mock, patch
-
+from unittest.mock import MagicMock, patch
+import io
 import hashlib
 
-
-def create_recv_side_effect(return_value):
-    i = 0
-    def side_effect(self, n):
-        if i >= len(return_value):
-            return b''
-        result = return_value[i:i+n]
-        i += n
-        return result
-    return side_effect
+LOCALHOST = '127.0.0.1'
+PORT = 51841
 
 class TestCreateKeyPair(unittest.TestCase):
 
     @patch("txe_client.socket.socket")
     def test_normal_flow(self, mock_socket):
+        # setup
         password = "Password123"
+        password_digest = hashlib.sha1(password.encode()).digest()
+        expected_message = b"\x01\x00\x00\x00\x01\x14\x00\x00\x00" + password_digest
         expected_pubkey = bytes(i for i in range(0x20))
-        result = b"\x01\x00\x00\x00\x01\x20\x00\x00\x00" + expected_pubkey
-        mock_socket.send = Mock()
-        mock_socket.recv = Mock(side_effect=create_recv_side_effect(result))
+        response = io.BytesIO(b"\x01\x00\x00\x00\x01\x20\x00\x00\x00" + expected_pubkey)
 
-        try:
-            pubkey = txe_client.create_keypair(password)
-        except: pass
+        mock_socket.return_value = mock_socket
+        mock_socket.__enter__.return_value = mock_socket
+        mock_socket.recv = MagicMock(side_effect=response.read)
 
-        mock_socket.send.assert_called_once()
+        # action
+        pubkey = txe_client.create_keypair(password)
+
+        # assert
+        mock_socket.assert_called_once()
+        mock_socket.connect.assert_called_once_with((LOCALHOST, PORT))
+        mock_socket.send.assert_called_once_with(expected_message)
         self.assertEqual(pubkey, expected_pubkey)
 
 
