@@ -12,6 +12,17 @@ class TestCreateKeyPair(unittest.TestCase):
 
     @patch("txe_client.socket.socket")
     def test_normal_flow(self, mock_socket):
+        """
+        This test runs create_keypair with the password "Password123". The test
+        expects from create_keypair to do the following things:
+        * Create a socket.
+        * Connect to localhost:51841
+        * Send a well-formed header.
+        * Send the sha-1 of the password as the payload.
+        * Parse correctly the response's header.
+        * Give back the public key that is found in the resposne's payload.
+        """
+
         # setup
         password = "Password123"
         password_digest = hashlib.sha1(password.encode()).digest()
