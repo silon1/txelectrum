@@ -11,4 +11,4 @@ applet.entry_class: secp256k1_signer.TxeMain
 applet.flash.quota: 0
 applet.debug.enable: true
 applet.written.by.intel: true
-applet.access.control: 10
+applet.access.control: 12
