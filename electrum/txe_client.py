@@ -12,18 +12,13 @@ Example Usage:
         # handle the exception
 * Sign a transaction:
     try:
-        sig = sign(transaction, TXE_SHA256, password, pubkey)
+        sig = sign(transaction, password, pubkey)
         validate_sig(sig) # Out of txe_client's responsibilities
     except TxeWrongPasswordError:
         # handle the exception
     except TxeException:
         # handle other exceptions
 """
-
-
-TXE_SHA1 = 0
-TXE_SHA256 = 1
-TXE_SHA512 = 2
 
 
 # The design notes for the client-server protocol is found at ```design-notes/client-server-protocol.md```.
@@ -47,7 +42,6 @@ __VERSION_LENGTH = 4
 __MESSAGE_TYPE_LENGTH = 1
 __PAYLOAD_LENGTH_LENGTH = 4
 __PUBKEY_LENGTH = 32
-__HASH_FUNC_LENGTH = 1
 
 
 def create_keypair(password:str) -> bytes:
@@ -61,8 +55,8 @@ def create_keypair(password:str) -> bytes:
     key from the server.
     """
 
-    password_digest = hashlib.sha1(password.encode()).digest()
-    message_type, payload = __send_recv(__CREATE_KEYS, password_digest)
+    hashed_password = hashlib.sha1(password.encode()).digest()
+    message_type, payload = __send_recv(__CREATE_KEYS, hashed_password)
 
     if message_type != __CREATE_KEYS:
         raise TxeException(f"The server sent the message type {message_type} and not {__CREATE_KEYS}.")
@@ -73,21 +67,15 @@ def create_keypair(password:str) -> bytes:
     return payload
 
 
-def sign(buffer:bytes, hash_func:int, password:str, pubkey:bytes) -> bytes:
+def sign(buffer:bytes, password:str, pubkey:bytes) -> bytes:
     """
     Requests the server to sign the buffer with the pair of the public key
     and a selected hash function.
 
     The parameters for this function are the following:
-    1. buffer to be signed
-    2. hash function to use when signed
-    3. password to unlock the key pair
-    4. public key to identify the key pair to use
-
-    hash_func must be one of the following:
-    * txe_client.TXE_SHA1
-    * txe_client.TXE_SHA256
-    * txe_client.TXE_SHA512
+    1. Buffer to be signed.
+    2. Password to unlock the key pair.
+    3. Public key to identify the key pair to use.
 
     Returns the buffer's digital signature. This function doesn't validate
     the digital signautre. The caller MUST validate the digital signature
@@ -101,12 +89,10 @@ def sign(buffer:bytes, hash_func:int, password:str, pubkey:bytes) -> bytes:
     from the server.
     """
 
-    if hash_func not in (TXE_SHA1, TXE_SHA256, TXE_SHA512):
-        raise ValueError(f"Invalid hash func {hash_func}")
 
-    password_digest = hashlib.sha1(password.encode()).digest()
-    encoded_hash_func = hash_func.to_bytes(__HASH_FUNC_LENGTH, byteorder=__ENDIANESS)
-    payload = pubkey + password_digest + encoded_hash_func + buffer
+    hashed_password = hashlib.sha1(password.encode()).digest()
+    hashed_buffer = hashlib.sha256(buffer).digest()
+    payload = pubkey + hashed_password + hashed_buffer
     
     message_type, payload = __send_recv(__SIGN_BUFFER, payload)
 
