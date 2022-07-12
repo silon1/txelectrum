@@ -1,6 +1,7 @@
 package secp256k1_signer;
 
 import com.intel.util.*;
+import com.intel.crypto.*;
 
 //
 // Implementation of DAL Trusted Application: secp256k1_signer 
@@ -10,6 +11,8 @@ import com.intel.util.*;
 // **************************************************************************************************
 
 public class TxeMain extends IntelApplet {
+	
+	private EccAlg signer;
 
 	/**
 	 * This method will be called by the VM when a new session is opened to the Trusted Application 
@@ -25,6 +28,8 @@ public class TxeMain extends IntelApplet {
 	 */
 	public int onInit(byte[] request) {
 		DebugPrint.printString("Hello, DAL!");
+		signer = EccAlg.create(EccAlg.ECC_CURVE_TYPE_SECP256K1);
+		signer.generateKeys();
 		return APPLET_SUCCESS;
 	}
 	
@@ -45,7 +50,40 @@ public class TxeMain extends IntelApplet {
 			DebugPrint.printBuffer(request);
 		}
 		
-		final byte[] myResponse = { 'O', 'K' };
+		final short sigSize = signer.getSignatureSize();
+		final byte[] sigR = new byte[sigSize];
+		final byte[] sigS = new byte[sigSize];
+		
+		signer.signComplete(request, (short)0, (short)request.length, sigR, (short)0, sigS, (short)0);
+		
+		// sanity check
+		final boolean working = signer.verifyComplete(request, (short)0, (short)request.length, sigR, (short)0, (short)sigR.length, sigS, (short)0, (short)sigS.length);
+		int responseCode = working ? 0 : 1;
+		
+		byte[] myResponse = { 'O', 'K' };
+		
+		// Source: https://bitcoin.stackexchange.com/a/92683
+		// I tested this code on https://kjur.github.io/jsrsasign/sample/sample-ecdsa.html
+		if (commandId == 0) {
+			// Send the public key uncompressed.
+			final EccAlg.CurvePoint pubkey = new EccAlg.CurvePoint(EccAlg.ECC_CURVE_TYPE_SECP256K1);
+			signer.getPublicKey(pubkey);
+			myResponse = new byte[1 + pubkey.x.length + pubkey.y.length];
+			myResponse[0] = 0x04;
+			System.arraycopy(pubkey.x, 0, myResponse, 1, pubkey.x.length);
+			System.arraycopy(pubkey.y, 0, myResponse, pubkey.x.length + 1, pubkey.y.length);
+		} else if (commandId == 1) {
+			// Send the signature.
+			myResponse = new byte[6 + sigSize * 2];
+			myResponse[0] = 0x30;
+			myResponse[1] = (byte)(myResponse.length - 2);
+			myResponse[2] = 0x02;
+			myResponse[3] = (byte)sigSize;
+			System.arraycopy(sigR, 0, myResponse, 4, sigSize);
+			myResponse[4 + sigSize] = 0x02;
+			myResponse[5 + sigSize] = (byte)sigSize;
+			System.arraycopy(sigS, 0, myResponse, 6 + sigSize, sigSize);
+		}
 
 		/*
 		 * To return the response data to the command, call the setResponse
@@ -62,7 +100,7 @@ public class TxeMain extends IntelApplet {
 		 * Note that calling this method more than once will reset the code previously set. 
 		 * If not set, the default response code that will be returned to SW application is 0.
 		 */
-		setResponseCode(commandId);
+		setResponseCode(responseCode);
 
 		/*
 		 * The return value of the invokeCommand method is not guaranteed to be
