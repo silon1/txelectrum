@@ -45,29 +45,30 @@ header. The header will contain following fields:
 
 The client asks the server to create a key pair. The algorithm must be ECDSA secp256k1.
 Therefore, the Message Type in the headers of request and response must be 1. The
-client must add in the payload a password digest using SHA-1 algorithm. The server then
+client must add in the payload a hashed password with SHA-1 algorithm. The server then
 will create a key pair protected with the password and response with the created public
 key.
+
+The server must send the public key uncompressed in SEC format[^1]. Therefore, the public
+key size must be 65 bytes. 
+
+[^1]: https://bitcoin.stackexchange.com/a/92683.
 
 The following table summarizes the fields' content:
 
 |                  | Version Number | Message Type | Payload's Length | Payload         |
 |------------------|----------------|--------------|------------------|-----------------|
-| client to server | 1              | 1            | 20               | password digest |
-| server to client | 1              | 1            | 32               | public key      |
+| client to server | 1              | 1            | 20               | hashed password |
+| server to client | 1              | 1            | 65               | public key      |
 
 ## Sign a Buffer
 
 The client requests with Message Type 2 and adds the following fields in the paylod:
-1. public key (32 bytes)
-2. password digest (20 bytes)
-3. hash function to use (1 byte)
-4. buffer to sign (variable length)
+1. The public key uncompressed in SEC format (65 bytes)[^1].
+2. The hash of the password with SHA-1 algorithm (20 bytes).
+3. The hash of the buffer to sign with SHA-256 algorithm (32 bytes)[^2].
 
-The hash function field in the payload can have the following values:
-* 1 for SHA-1
-* 2 for SHA-256
-* 3 for SHA-512
+[^2]: [Bitcoin uses SHA-256 algorithm for transactions](https://bitcoin.stackexchange.com/a/9216)
 
 The server's response differs according to the client's request and the TXE state. The
 server can response in the following ways:
@@ -81,9 +82,9 @@ following error types:
 
 The following table summarizes the fields' content in every possible flow:
 
-|                  | Flow                | Version Number | Message Type | Payload's Length | Payload         |
-|------------------|---------------------|----------------|--------------|------------------|-----------------|
-| client to server | -                   | 1              | 2            | variable length  | public key + password digest + hash function + buffer to sign |
-| server to client | normal              | 1              | 2            | variable length  | digital signature |
-| server to client | missing private key | 1              | 3            | 1                | 0                 |
-| server to client | wrong password      | 1              | 3            | 1                | 1                 |
+|                  | Flow                | Version Number | Message Type | Payload's Length | Payload                                              |
+|------------------|---------------------|----------------|--------------|------------------|------------------------------------------------------|
+| client to server | -                   | 1              | 2            | 117              | public key + hashed password + hashed buffer to sign |
+| server to client | normal              | 1              | 2            | 70               | digital signature                                    |
+| server to client | missing private key | 1              | 3            | 1                | 0                                                    |
+| server to client | wrong password      | 1              | 3            | 1                | 1                                                    |
