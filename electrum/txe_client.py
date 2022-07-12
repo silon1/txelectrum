@@ -168,10 +168,10 @@ def __send_recv(message_type:int, payload:bytes) -> Tuple[int, bytes]:
             raise TxeException(f"The server sent the version {version} and not {__VERSION}")
 
         encoded_message_type = sock.recv(__MESSAGE_TYPE_LENGTH)
-        message_type = int.from_bytes(__MESSAGE_TYPE_LENGTH, byteorder=__ENDIANESS)
+        message_type = int.from_bytes(encoded_message_type, byteorder=__ENDIANESS)
 
         encoded_length = sock.recv(__PAYLOAD_LENGTH_LENGTH)
-        length = int.from_bytes(__PAYLOAD_LENGTH_LENGTH, byteorder=__ENDIANESS)
+        length = int.from_bytes(encoded_length, byteorder=__ENDIANESS)
 
         payload = sock.recv(length)
 
