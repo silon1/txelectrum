@@ -85,6 +85,6 @@ The following table summarizes the fields' content in every possible flow:
 |                  | Flow                | Version Number | Message Type | Payload's Length | Payload                                              |
 |------------------|---------------------|----------------|--------------|------------------|------------------------------------------------------|
 | client to server | -                   | 1              | 2            | 117              | public key + hashed password + hashed buffer to sign |
-| server to client | normal              | 1              | 2            | 70               | digital signature                                    |
+| server to client | normal              | 1              | 2            | variable length  | digital signature                                    |
 | server to client | missing private key | 1              | 3            | 1                | 0                                                    |
 | server to client | wrong password      | 1              | 3            | 1                | 1                                                    |
