@@ -68,9 +68,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CreateKeyPairResponder.cs" />
+    <Compile Include="ErrorType.cs" />
+    <Compile Include="IBufferSigner.cs" />
+    <Compile Include="IKeyPairCreator.cs" />
+    <Compile Include="IMessageResponder.cs" />
     <Compile Include="ISignerServer.cs" />
+    <Compile Include="Message.cs" />
+    <Compile Include="MessageType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ProtocolError.cs" />
+    <Compile Include="SignBufferResponder.cs" />
+    <Compile Include="SignerApplet.cs" />
+    <Compile Include="SignerServer.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Assemblies\" />
