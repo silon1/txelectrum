@@ -66,5 +66,16 @@ namespace secp256k1_signer_server
             Console.WriteLine("Press Enter to finish.");
             Console.Read();
         }
+
+        static void Example()
+        {
+            using (var applet = new SignerApplet())
+            using (var server = new SignerServer())
+            {
+                server.AddMessageResponder(new CreateKeyPairResponder(applet));
+                server.AddMessageResponder(new SignBufferResponder(applet));
+                server.Start();
+            }
+        }
     }
 }
