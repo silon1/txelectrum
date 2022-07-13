@@ -10,17 +10,17 @@ design note, I will explain the interface design between the client and the serv
 
 ## Purpose
 
-The purpose of the protocol is to allow the client to perform the following tasks:
+The purpose of the protocol is to allow the client to create a bitcoin wallet on
+a remote server. Therefore, the server must provide the following funcitonality:
 
-1. Request the server to create a seckp256k1 key pair in the TXE protected with a
-password.
-2. Receive the public key of the key pair from the TXE.
-3. Send a buffer to sign with the private key located in the TXE.
-4. Receive the digital signature of the buffer.
+1. Request the server to create a seckp256k1 key pair protected with a password.
+2. Receive the public key of the key pair from the server.
+3. Send a hashed buffer to sign with the private key.
+4. Receive the digital signature of the hashed buffer.
 
 ## Start a Connection
 
-The server will serve clients using a TCP socket on ```localhost:51841```. (The port 51841
+The server will serve clients using a TCP socket on `localhost:51841`. (The port 51841
 was chosen because it equals to crc-16 of 'txelectrum'.)
 
 ## Message Structure
@@ -75,10 +75,10 @@ server can response in the following ways:
 
 * In normal flow, the server responses with Message Type 2 and the digital signature
 in the payload in DER format[^1].
-* In error flow, the response must be with Message Type 3 and payload with one of the
-following error types:
-    * On missing private key, the error type is 0.
-    * On wrong password, the error type is 1.
+* In error flow, the response must be with Message Type 3 and a 2-bytes payload with
+one of the following error codes:
+    * On missing private key, the error code is 0x0200.
+    * On wrong password, the error code is 0x0201.
 
 The following table summarizes the fields' content in every possible flow:
 
@@ -86,5 +86,29 @@ The following table summarizes the fields' content in every possible flow:
 |------------------|---------------------|----------------|--------------|------------------|------------------------------------------------------|
 | client to server | -                   | 1              | 2            | 117              | public key + hashed password + hashed buffer to sign |
 | server to client | normal              | 1              | 2            | variable length  | digital signature                                    |
-| server to client | missing private key | 1              | 3            | 1                | 0                                                    |
-| server to client | wrong password      | 1              | 3            | 1                | 1                                                    |
+| server to client | missing private key | 1              | 3            | 2                | 0x0200                                               |
+| server to client | wrong password      | 1              | 3            | 2                | 0x0201                                               |
+
+## General Errors
+
+Sometimes the server may incounter in an error not specific to a message type. For
+example, consider the following errors:
+* The client sent a badly formed message.
+* The server incountered an internal error.
+* The client'd waited too long until it sent the whole message.
+
+When a server incouters a general error, it must send a response with Message
+Type 3 and a 2-bytes payload with one of the following error codes:
+* On badly formed message, the error code is 0x0000.
+* On internal error, the error code is 0x0001.
+* On timeout error, the error code is 0x0002.
+* On unkown error, the error code is 0x00FF.
+
+The following table summarizes the fields' content in every possible general error response:
+
+| Error                | Version Number | Message Type | Payload's Length | Payload |
+|----------------------|----------------|--------------|------------------|---------|
+| badly formed message | 1              | 3            | 2                | 0x0000  |
+| internal error       | 1              | 3            | 2                | 0x0001  |
+| timeout error        | 1              | 3            | 2                | 0x0002  |
+| unkown error         | 1              | 3            | 2                | 0x00FF  |
