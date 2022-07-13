@@ -21,10 +21,10 @@ Example Usage:
 """
 
 
-# The design notes for the client-server protocol is found at ```design-notes/client-server-protocol.md```.
+# The design notes for the client-server protocol is found at `design-notes/client-server-protocol.md`.
 
 
-from typing import Tuple
+from typing import Tuple, Union
 import hashlib
 import socket
 
@@ -43,6 +43,9 @@ __MESSAGE_TYPE_LENGTH = 1
 __PAYLOAD_LENGTH_LENGTH = 4
 __PUBKEY_LENGTH = 32
 
+__ERROR_CODE_MISSING_PRIVATE_KEY = 0x0200
+__ERROR_CODE_WRONG_PASSWORD = 0x0201
+
 
 def create_keypair(password:str) -> bytes:
     """
@@ -57,6 +60,10 @@ def create_keypair(password:str) -> bytes:
 
     hashed_password = hashlib.sha1(password.encode()).digest()
     message_type, payload = __send_recv(__CREATE_KEYS, hashed_password)
+
+    if message_type == __ERROR:
+        error_code = int.from_bytes(payload, byteorder=__ENDIANESS)
+        raise TxeException(error_code)
 
     if message_type != __CREATE_KEYS:
         raise TxeException(f"The server sent the message type {message_type} and not {__CREATE_KEYS}.")
@@ -101,27 +108,33 @@ def sign(buffer:bytes, password:str, pubkey:bytes) -> bytes:
         return payload
 
     if message_type == __ERROR:
-        # error flow, the payload contains the reason for the error
-        error_reason = int.from_bytes(payload, byteorder=__ENDIANESS)
-        if error_reason == 0:
+        # error flow, the error code is in the payload
+        error_code = int.from_bytes(payload, byteorder=__ENDIANESS)
+        if error_code == __ERROR_CODE_MISSING_PRIVATE_KEY:
             raise TxeMissingPrivateKeyError()
-        if error_reason == 1:
+        if error_code == __ERROR_CODE_WRONG_PASSWORD:
             raise TxeWrongPasswordError()
-        raise TxeException(f"The server sent an unexpected error reason {error_reason}")
+        raise TxeException(error_code)
     
     raise TxeException(f"The server sent an unexpected message type {message_type}")
 
 
 class TxeException(Exception):
-    pass
+    def __init__(self, e:Union[int,str]):
+        if type(e) is int:
+            super.__init__(f"The server returned the error code ({e}).")
+        else:
+            super.__init__(e)
 
 
 class TxeWrongPasswordError(TxeException):
-    pass
+    def __init__(self):
+        super.__init__(__ERROR_CODE_WRONG_PASSWORD)
 
 
 class TxeMissingPrivateKeyError(TxeException):
-    pass
+    def __init__(self):
+        super.__init__(__ERROR_CODE_MISSING_PRIVATE_KEY)
 
 
 def __send_recv(message_type:int, payload:bytes) -> Tuple[int, bytes]:
