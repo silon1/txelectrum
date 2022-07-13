@@ -77,9 +77,9 @@ def sign(buffer:bytes, password:str, pubkey:bytes) -> bytes:
     2. Password to unlock the key pair.
     3. Public key to identify the key pair to use.
 
-    Returns the buffer's digital signature. This function doesn't validate
-    the digital signautre. The caller MUST validate the digital signature
-    for security.
+    Returns the buffer's digital signature in DER format. This function
+    doesn't validate the digital signautre. The caller MUST validate the
+    digital signature for security.
 
     This function may raise the following exceptions:
     * TxeMissingPrivateKeyError when the server couldn't find the key pair

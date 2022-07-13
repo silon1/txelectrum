@@ -74,7 +74,7 @@ The server's response differs according to the client's request and the TXE stat
 server can response in the following ways:
 
 * In normal flow, the server responses with Message Type 2 and the digital signature
-in the payload.
+in the payload in DER format[^1].
 * In error flow, the response must be with Message Type 3 and payload with one of the
 following error types:
     * On missing private key, the error type is 0.
