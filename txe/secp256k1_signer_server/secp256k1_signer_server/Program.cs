@@ -67,7 +67,7 @@ namespace secp256k1_signer_server
             Console.Read();
         }
 
-        static void Example()
+        static void ExampleMain()
         {
             using (var applet = new SignerApplet())
             using (var server = new SignerServer())
