@@ -4,6 +4,8 @@
     {
         private IBufferSigner m_signer;
 
+        public MessageType MessageType => MessageType.SIGN_BUFFER;
+
         public SignBufferResponder(IBufferSigner signer)
         {
             m_signer = signer;

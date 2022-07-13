@@ -2,6 +2,7 @@
 {
     public interface IMessageResponder
     {
+        MessageType MessageType { get; }
         Message RespondeMessage(Message message);
     }
 }

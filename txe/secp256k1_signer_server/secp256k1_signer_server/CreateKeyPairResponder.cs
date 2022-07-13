@@ -4,6 +4,8 @@
     {
         private IKeyPairCreator m_keyPairCreator;
 
+        public MessageType MessageType => MessageType.CREATE_KEYPAIR;
+
         public CreateKeyPairResponder(IKeyPairCreator keyPairCreator)
         {
             m_keyPairCreator = keyPairCreator;
