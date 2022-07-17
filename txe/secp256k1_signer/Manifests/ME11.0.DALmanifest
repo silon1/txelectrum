@@ -1,0 +1,14 @@
+applet.id: e48e7440-4f22-4639-bae5-7216d720347e
+applet.name: secp256k1_signer
+applet.vendor: Intel
+applet.version: 1.0
+security.version: 1
+applet.heap.size: 50000
+applet.platform: CSE
+applet.api.level: 7
+applet.description: This is the secp256k1_signer applet
+applet.entry_class: secp256k1_signer.TxeMain
+applet.flash.quota: 0
+applet.debug.enable: true
+applet.written.by.intel: true
+applet.access.control: 12
