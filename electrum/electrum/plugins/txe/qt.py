@@ -20,8 +20,8 @@ class Plugin(BasePlugin):
         keys = wallet.keystore
 
         if any([keys.seed, keys.xprv]) or not wallet.is_watching_only():
-            main_window.show_error(_("This plugin effect only on new wallets.\n"
-                                     "Create new watch only wallet and transfer your coins to it."))
+            Data.main_window.show_error(_("This plugin effects only on new wallets.\n"),
+                                        _("Create new watch only wallet and transfer your coins to it."))
 
     @hook
     def tc_sign_wrapper(self, wallet: electrum.wallet.Standard_Wallet, tx, on_success, on_failure):
