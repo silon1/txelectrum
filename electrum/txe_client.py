@@ -43,10 +43,14 @@ def create_keypair(password:str) -> bytes:
     req_body = { "hashed_password": hashed_password }
 
     try:
+
         response = requests.post(f"{__BASE_URL}/create_keypair", json=req_body)
         response.raise_for_status()
-        return response.json()["public_key"]
+        pubkey = response.json()["public_key"]
+        return bytes.fromhex(pubkey)
+
     except Exception as e:
+
         raise TxeException(e)
 
 
@@ -72,7 +76,33 @@ def sign(buffer:bytes, password:str, pubkey:bytes) -> bytes:
     from the server.
     """
 
-    pass
+    hashed_password = hashlib.sha1(password.encode()).hexdigest()
+    hashed_buffer = hashlib.sha256(buffer).hexdigest()
+
+    req_body = {
+        "public_key": pubkey.hex(),
+        "hashed_password": hashed_password,
+        "hashed_buffer": hashed_buffer,
+    }
+
+    try:
+
+        response = requests.post(f"{__BASE_URL}/sign_buffer", json=req_body)
+        response.raise_for_status()
+        signature = response.json()["signature"]
+        return bytes.fromhex(signature)
+
+    except requests.HTTPError as e:
+
+        if e.response.status_code == 404:
+            raise TxeMissingPrivateKeyError(e)
+        if e.response.status_code == 401:
+            raise TxeWrongPasswordError(e)
+        raise TxeException(e)
+
+    except Exception as e:
+
+        raise TxeException(e)
 
 
 class TxeException(Exception):
