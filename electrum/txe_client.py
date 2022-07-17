@@ -20,6 +20,13 @@ Example Usage:
         # handle other exceptions
 """
 
+# The REST api is explained at `/openapi.yaml`.
+
+import requests
+import hashlib
+
+__BASE_URL = "http://localhost:51841"
+
 
 def create_keypair(password:str) -> bytes:
     """
@@ -32,7 +39,15 @@ def create_keypair(password:str) -> bytes:
     key from the server.
     """
 
-    pass
+    hashed_password = hashlib.sha1(password.encode()).hexdigest()
+    req_body = { "hashed_password": hashed_password }
+
+    try:
+        response = requests.post(f"{__BASE_URL}/create_keypair", json=req_body)
+        response.raise_for_status()
+        return response.json()["public_key"]
+    except Exception as e:
+        raise TxeException(e)
 
 
 def sign(buffer:bytes, password:str, pubkey:bytes) -> bytes:
