@@ -1,4 +1,5 @@
 ﻿using Intel.Dal;
+using Nancy.Hosting.Self;
 using System;
 using System.IO;
 using System.Text;
@@ -22,6 +23,17 @@ namespace secp256k1_signer_server
             // The JHI.dll was placed in the bin\Amulet folder during project build.
             Jhi.DisableDllValidation = true;
 #endif
+
+            var config = new HostConfiguration()
+            {
+                RewriteLocalhost = false
+            };
+            using (var host = new NancyHost(config, new Uri("http://localhost:51841")))
+            {
+                host.Start();
+                Console.WriteLine("Starting host...");
+                Console.ReadLine();
+            }
 
             Jhi jhi = Jhi.Instance;
             JhiSession session;
