@@ -61,7 +61,6 @@ class Plugin(BasePlugin):
         Pwd.pwd_d = PasswordDialog(main_window)
         keys = wallet.keystore
 
-
         # dialog = WindowModalDialog(main_window.top_level_window(), _("Enter PIN"))
         #
         # vbox = QVBoxLayout()
@@ -81,15 +80,17 @@ class Plugin(BasePlugin):
         # dialog.close()
 
 
-
         if any([keys.seed, keys.xprv]) or not wallet.is_watching_only():
             choise = Pwd.main_window.question("This plugin effects only on watch only wallets.\n"
                                                "Create new watch only wallet and transfer your coins to it.\n"
                                                "Create new key pairs?")
-            # if choise:
-            #     pubkey = create_keypair()
-            #     pubkey = base58.b58decode(pubkey)
-            #     Pwd.main_window.show_message(pubkey, title='New master pubkey')
+            if choise:
+                pass
+                # pubkey = create_keypair()
+                # pubkey = base58.b58decode(pubkey)
+                # Pwd.main_window.show_message(pubkey, title='New master pubkey')
+
+        wallet.is_watching_only = MethodType(_Abstract_Wallet.is_watching_only, wallet)
 
     @hook
     def tc_sign_wrapper(self, wallet: electrum.wallet.Standard_Wallet, tx, on_success, on_failure):
