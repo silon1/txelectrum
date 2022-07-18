@@ -84,6 +84,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppletBootstraper.cs" />
+    <Compile Include="AppletSigner.cs" />
     <Compile Include="ExampleSigner.cs" />
     <Compile Include="IBufferSigner.cs" />
     <Compile Include="IKeyPairCreator.cs" />
