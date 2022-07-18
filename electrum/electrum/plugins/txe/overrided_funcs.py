@@ -23,16 +23,18 @@ class _ConfirmTxDialog:
     """
     Override ConfirmTxDialog on_send
     """
+
     @staticmethod
     def on_send(self):
         self.is_send = True
         self.accept()
-        return 1
+
 
 class _SendTab:
     """
     Override SendTab pay_onchain_dialog
     """
+
     @staticmethod
     def pay_onchain_dialog(
             self, inputs: Sequence[PartialTxInput],
@@ -55,7 +57,7 @@ class _SendTab:
         conf_dlg.pw_label.setVisible(True)
         conf_dlg.pw.setVisible(True)
 
-        # self.message_label = WWLabel(_('Enter your password to proceed'))
+        conf_dlg.message_label.setText(_('Enter your password to proceed'))
 
         conf_dlg.send_button.clicked.disconnect(conf_dlg.on_send)
         conf_dlg.on_send = MethodType(_ConfirmTxDialog.on_send, conf_dlg)
@@ -79,14 +81,17 @@ class _SendTab:
             preview_dlg.show()
             return
 
-        cancelled, is_send, Pwd.p, tx = conf_dlg.run()
+        cancelled, is_send, password, tx = conf_dlg.run()
+        Pwd.p = password
         if cancelled:
             return
         if is_send:
             self.save_pending_invoice()
+
             def sign_done(success):
                 if success:
                     self.window.broadcast_or_show(tx)
+
             self.window.sign_tx_with_password(
                 tx,
                 callback=sign_done,
@@ -102,8 +107,14 @@ class _SendTab:
             preview_dlg.show()
 
 
-
 class _Abstract_Wallet:
+    @staticmethod
+    def is_watching_only(self):
+        """
+        Override Abstract_Wallet is_watching_only
+        """
+        return False
+
     @staticmethod
     def sign_transaction(self: electrum.wallet.Abstract_Wallet, tx: PartialTransaction, password):
         """

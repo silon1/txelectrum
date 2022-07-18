@@ -55,6 +55,8 @@ def create_keypair(password:str) -> bytes:
 
 
 def txe_sign(buffer:bytes, password:str, pubkey:bytes) -> bytes:
+    print(password)
+    exit()
     """
     Requests the server to sign the buffer with the pair of the public key
     and a selected hash function.
