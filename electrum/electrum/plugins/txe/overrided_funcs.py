@@ -1,5 +1,6 @@
 import copy
 from types import MethodType
+from typing import List, Sequence
 
 import electrum.wallet
 from electrum.crypto import sha256d
@@ -7,8 +8,100 @@ from electrum.keystore import Software_KeyStore
 from electrum.transaction import PartialTransaction, Sighash
 from electrum.util import UserCancelled, bfh, bh2u
 
-from .send_trans import send_trans
+from .send_trans import send_trans, Pwd
 from .txe_client import txe_sign
+from ...gui.qt.confirm_tx_dialog import ConfirmTxDialog
+from ...gui.qt.transaction_dialog import PreviewTxDialog
+from ...gui.qt.util import WWLabel
+from ...i18n import _
+from ...plugin import run_hook
+from ...transaction import PartialTxInput, PartialTxOutput
+from ...util import parse_max_spend
+
+
+class _ConfirmTxDialog:
+    """
+    Override ConfirmTxDialog on_send
+    """
+    @staticmethod
+    def on_send(self):
+        self.is_send = True
+        self.accept()
+        return 1
+
+class _SendTab:
+    """
+    Override SendTab pay_onchain_dialog
+    """
+    @staticmethod
+    def pay_onchain_dialog(
+            self, inputs: Sequence[PartialTxInput],
+            outputs: List[PartialTxOutput], *,
+            external_keypairs=None) -> None:
+        is_sweep = bool(external_keypairs)
+        make_tx = lambda fee_est: self.wallet.make_unsigned_transaction(
+            coins=inputs,
+            outputs=outputs,
+            fee=fee_est,
+            is_sweep=is_sweep)
+        output_values = [x.value for x in outputs]
+        if any(parse_max_spend(outval) for outval in output_values):
+            output_value = '!'
+        else:
+            output_value = sum(output_values)
+
+        conf_dlg = ConfirmTxDialog(window=self.window, make_tx=make_tx, output_value=output_value, is_sweep=is_sweep)
+        conf_dlg.password_required = True
+        conf_dlg.pw_label.setVisible(True)
+        conf_dlg.pw.setVisible(True)
+
+        # self.message_label = WWLabel(_('Enter your password to proceed'))
+
+        conf_dlg.send_button.clicked.disconnect(conf_dlg.on_send)
+        conf_dlg.on_send = MethodType(_ConfirmTxDialog.on_send, conf_dlg)
+        conf_dlg.send_button.clicked.connect(conf_dlg.on_send)
+
+        if conf_dlg.not_enough_funds:
+            # Check if we had enough funds excluding fees,
+            # if so, still provide opportunity to set lower fees.
+            if not conf_dlg.have_enough_funds_assuming_zero_fees():
+                text = self.get_text_not_enough_funds_mentioning_frozen()
+                self.show_message(text)
+                return
+
+        # shortcut to advanced preview (after "enough funds" check!)
+        if self.config.get('advanced_preview'):
+            preview_dlg = PreviewTxDialog(
+                window=self.window,
+                make_tx=make_tx,
+                external_keypairs=external_keypairs,
+                output_value=output_value)
+            preview_dlg.show()
+            return
+
+        cancelled, is_send, Pwd.p, tx = conf_dlg.run()
+        if cancelled:
+            return
+        if is_send:
+            self.save_pending_invoice()
+            def sign_done(success):
+                if success:
+                    self.window.broadcast_or_show(tx)
+            self.window.sign_tx_with_password(
+                tx,
+                callback=sign_done,
+                password=password,
+                external_keypairs=external_keypairs,
+            )
+        else:
+            preview_dlg = PreviewTxDialog(
+                window=self.window,
+                make_tx=make_tx,
+                external_keypairs=external_keypairs,
+                output_value=output_value)
+            preview_dlg.show()
+
+
 
 class _Abstract_Wallet:
     @staticmethod
@@ -16,30 +109,25 @@ class _Abstract_Wallet:
         """
         Override Abstract_Wallet sign_transaction
         """
-        # pwd = Data.get_pwd()
 
         if not isinstance(tx, PartialTransaction):
             return
-        # note: swap signing does not require the password
+
         swap = self.lnworker.swap_manager.get_swap_by_tx(tx) if self.lnworker else None
         if swap:
             self.lnworker.swap_manager.sign_tx(tx, swap)
             return
-        # add info to a temporary tx copy; including xpubs
-        # and full derivation paths as hw keystores might want them
+
         tmp_tx = copy.deepcopy(tx)
         tmp_tx.add_info_from_wallet(self, include_xpubs=True)
-        # sign. start with ready keystores.
-        # note: ks.ready_to_sign() side-effect: we trigger pairings with potential hw devices.
-        #       We only do this once, before the loop, however we could rescan after each iteration,
-        #       to see if the user connected/disconnected devices in the meantime.
+
         for k in sorted(self.get_keystores(), key=lambda ks: ks.ready_to_sign(), reverse=True):
             try:
                 k.sign_transaction = MethodType(_Software_KeyStore.sign_transaction, k)
                 k.sign_transaction(tmp_tx, password)
             except UserCancelled:
                 continue
-        # remove sensitive info; then copy back details from temporary tx
+
         tmp_tx.remove_xpubs_and_bip32_paths()
         tx.combine_with_other_psbt(tmp_tx)
         tx.add_info_from_wallet(self, include_xpubs=False)
@@ -54,7 +142,6 @@ class _Software_KeyStore:
         """
         keypairs = self._get_tx_derivations(tx)
 
-        # Sign
         if keypairs:
             tx.sign = MethodType(_PartialTransaction.sign, tx)
             tx.sign(keypairs)
@@ -66,7 +153,7 @@ class _PartialTransaction:
         """
         Override PartialTransaction sign
         """
-        # keypairs:  pubkey_hex -> (secret_bytes, is_compressed)
+        # keypairs:  pubkey_hex -> (0, 0)
         bip143_shared_txdigest_fields = self._calc_bip143_shared_txdigest_fields()
         for i, txin in enumerate(self.inputs()):
             pubkeys = [pk.hex() for pk in txin.pubkeys]
@@ -94,6 +181,6 @@ class _PartialTransaction:
         sighash_type = sighash.to_bytes(length=1, byteorder="big").hex()
         pre_hash = sha256d(bfh(self.serialize_preimage(txin_index,
                                                        bip143_shared_txdigest_fields=bip143_shared_txdigest_fields)))
-        sig = txe_sign(pre_hash, '', pubkey)
+        sig = txe_sign(pre_hash, Pwd.p, pubkey)
         sig = bh2u(sig) + sighash_type
         return sig
