@@ -9,6 +9,7 @@ info:
     identifier: Apache-2.0
   description: >
     SECP256K1 Signer allows clients to create a bitcoin wallet on
+
     a remote server, and requst the server to sign bitcoin transactions. The
     algorithm used to creating wallets and signing transactions is [ECDSA
     secp256k1](https://en.bitcoin.it/wiki/Secp256k1). Therefore, the server
@@ -168,9 +169,10 @@ components:
         id: 4pf1wx4w7lhil
       format: binary
       example: 9f447054819975f30a80e593961d850788edf9b4
-      pattern: '^[A-Fa-f0-9]{40}'
+      pattern: '^[A-Fa-f0-9]{40}$'
       minLength: 40
       maxLength: 40
+      description: SHA-1 hash binary
     sha256:
       type: string
       title: sha256
@@ -178,11 +180,12 @@ components:
         id: 4pf1wx4w7lhil
       format: binary
       example: 315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3
-      pattern: '^[A-Fa-f0-9]{64}'
+      pattern: '^[A-Fa-f0-9]{64}$'
       minLength: 64
       maxLength: 64
       examples:
         - 315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3
+      description: SHA-256 hash binary
     public_key:
       type: string
       title: public_key
@@ -190,7 +193,7 @@ components:
         id: nfnni5oyjc04c
       format: binary
       example: 02f2dd109034c408433042ab0d237436ec62b5475ad87121ab607503c7d67d0895
-      pattern: '^[A-Fa-f0-9]{66}'
+      pattern: '^[A-Fa-f0-9]{66}$'
       examples:
         - 02f2dd109034c408433042ab0d237436ec62b5475ad87121ab607503c7d67d0895
       minLength: 66
@@ -206,12 +209,12 @@ components:
       format: binary
       example: >-
         3045022100f8a4dbab9c9fed17dfe75db206c2c070f86ae8537b87a221906bf6c981dd1259022074fda0ebb42393cecf7dcd0217d64bc7089306aab19c0efda4c0a965b1a6ceb5
-      pattern: '^[A-Fa-f0-9]*'
+      pattern: '^[A-Fa-f0-9]*$'
       examples:
         - >-
           3045022100f8a4dbab9c9fed17dfe75db206c2c070f86ae8537b87a221906bf6c981dd1259022074fda0ebb42393cecf7dcd0217d64bc7089306aab19c0efda4c0a965b1a6ceb5
       description: >-
-        Representation of secp256k1 digital signature using SHA-256, and in
+        Representation of secp256k1 digital signature in
         [DER](https://bitcoin.stackexchange.com/a/92683) format.
   securitySchemes: {}
   responses: {}
