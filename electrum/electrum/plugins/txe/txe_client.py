@@ -29,6 +29,7 @@ __BASE_URL = "http://localhost:51841"
 
 
 def create_keypair(password:str) -> bytes:
+    return '123'
     """
     Requests the server to create a new key pair using the secp256k1
     algorithm. The private key will be protected with the given password.

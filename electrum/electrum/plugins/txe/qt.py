@@ -1,7 +1,7 @@
 import inspect
 
 from PyQt5.QtCore import QRect
-from PyQt5.QtWidgets import QMessageBox, QLabel, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import QMessageBox, QLabel, QVBoxLayout, QPushButton, QWidget, QGridLayout
 import base58
 
 import electrum
@@ -15,8 +15,46 @@ from electrum.i18n import _
 
 from .send_trans import Pwd
 from .txe_client import create_keypair
-from ...gui.qt.password_dialog import PasswordDialog
-from ...gui.qt.util import WindowModalDialog, Buttons, CancelButton, OkButton, PasswordLineEdit
+from ...gui.qt.password_dialog import PasswordDialog, PasswordLayout
+from ...gui.qt.qrtextedit import ShowQRTextEdit
+from ...gui.qt.util import WindowModalDialog, Buttons, CancelButton, OkButton, PasswordLineEdit, WWLabel
+
+
+def create_pwd(win):
+    d = WindowModalDialog(win.top_level_window())
+
+    ok = QPushButton(_("Next"), d)
+    ok.clicked.connect(d.accept)
+    ok.setEnabled(False)
+    pl = PasswordLayout(_('Please create new password'), None, ok)
+    pl.encrypt_cb.setChecked(False)
+    pl.encrypt_cb.setVisible(False)
+    pl.new_pw.textChanged.connect(lambda: ok.setEnabled(ok.isEnabled() and bool(pl.new_pw.text())))
+
+    vbox = QVBoxLayout()
+    vbox.addLayout(pl.layout())
+    vbox.addLayout(Buttons(CancelButton(d), ok))
+    d.setLayout(vbox)
+
+    return d.exec_(), pl.new_pw.text()
+
+
+def show_pubkey(win, pubkey):
+    dialog = WindowModalDialog(win.top_level_window())
+
+    vbox = QVBoxLayout()
+
+    mpk_text = ShowQRTextEdit(pubkey, config=win.config)
+    mpk_text.setMaximumHeight(150)
+    mpk_text.addCopyButton()
+
+    vbox.addWidget(WWLabel(_("Master Public Key")))
+    vbox.addWidget(mpk_text)
+
+    vbox.addLayout(Buttons(CancelButton(dialog)))
+    dialog.setLayout(vbox)
+    dialog.exec_()
+    dialog.close()
 
 
 class Plugin(BasePlugin):
@@ -24,16 +62,24 @@ class Plugin(BasePlugin):
         super().__init__(parent, config, name)
 
     @hook
-    def password_dialog(self, pw, grid, a):
-        pass
+    def load_wallet(self, wallet: electrum.wallet.Abstract_Wallet, main_window: ElectrumWindow):
+        Pwd.main_window = main_window
+        Pwd.pwd_d = PasswordDialog(main_window)
+        keys = wallet.keystore
 
-    @hook
-    def transaction_dialog(self, d: 'TxDialog'):
-        pass
+        if any([keys.seed, keys.xprv]) or not wallet.is_watching_only():
+            choice = Pwd.main_window.question("This plugin effects only on watch only wallets.\n"
+                                              "Create new watch only wallet and transfer your coins to it.\n"
+                                              "Create new key pairs?")
+            if choice:
+                f, p = create_pwd(main_window)
+                if not f:
+                    return
+                pubkey = create_keypair(p)
+                # pubkey = base58.b58decode(pubkey)
+                show_pubkey(main_window, pubkey)
 
-    @hook
-    def transaction_dialog_update(self, d: 'TxDialog'):
-        pass
+        wallet.is_watching_only = MethodType(_Abstract_Wallet.is_watching_only, wallet)
 
     @hook
     def abort_send(self, send_tab):
@@ -53,44 +99,6 @@ class Plugin(BasePlugin):
         except:
             pass
         return 1
-
-
-    @hook
-    def load_wallet(self, wallet: electrum.wallet.Abstract_Wallet, main_window: ElectrumWindow):
-        Pwd.main_window = main_window
-        Pwd.pwd_d = PasswordDialog(main_window)
-        keys = wallet.keystore
-
-        # dialog = WindowModalDialog(main_window.top_level_window(), _("Enter PIN"))
-        #
-        # vbox = QVBoxLayout()
-        # pos = vbox.geometry()
-        #
-        # p = PasswordLineEdit()
-        # vbox.addWidget(QLabel('Password'))
-        # vbox.addWidget(p)
-        #
-        # send_button = QPushButton('Send')
-        # send_button.clicked.connect(lambda : print(p.text()))
-        # vbox.addWidget(send_button)
-        #
-        # vbox.addLayout(Buttons(CancelButton(dialog), OkButton(dialog)))
-        # dialog.setLayout(vbox)
-        # dialog.exec_()
-        # dialog.close()
-
-
-        if any([keys.seed, keys.xprv]) or not wallet.is_watching_only():
-            choise = Pwd.main_window.question("This plugin effects only on watch only wallets.\n"
-                                               "Create new watch only wallet and transfer your coins to it.\n"
-                                               "Create new key pairs?")
-            if choise:
-                pass
-                # pubkey = create_keypair()
-                # pubkey = base58.b58decode(pubkey)
-                # Pwd.main_window.show_message(pubkey, title='New master pubkey')
-
-        wallet.is_watching_only = MethodType(_Abstract_Wallet.is_watching_only, wallet)
 
     @hook
     def tc_sign_wrapper(self, wallet: electrum.wallet.Standard_Wallet, tx, on_success, on_failure):
