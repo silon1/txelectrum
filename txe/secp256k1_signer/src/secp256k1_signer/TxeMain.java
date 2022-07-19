@@ -2,6 +2,7 @@ package secp256k1_signer;
 
 import com.intel.util.*;
 import com.intel.crypto.*;
+import com.intel.langutil.ArrayUtils;
 
 //
 // Implementation of DAL Trusted Application: secp256k1_signer 
@@ -12,7 +13,27 @@ import com.intel.crypto.*;
 
 public class TxeMain extends IntelApplet {
 	
+	// Note: The design note of the protocol between the host and the protocol can be found in `/txe/README.md`.
+	
+	// Request codes
+	private static final int CREATE_KEYPAIR = 0;
+	private static final int SIGN_BUFFER = 1;
+	
+	// Response codes
+	private static final int OK = 0;
+	private static final int BAD_REQUEST = 1;
+	private static final int INTERNAL_ERROR = 2;
+	private static final int MISSING_PRIVATE_KEY = 3;
+	private static final int WRONG_PASSWORD = 4;
+	
+	// Buffer length's
+	private static final int SHA1_BYTES = 20;
+	private static final int SHA256_BYTES = 32;
+	private static final int COMPRESSED_PUBLIC_KEY_BYTES = 33;
+	private static final int DIGITAL_SIGNATURE_BYTES = 256;
+	
 	private EccAlg signer;
+	private EccStorage storage;
 
 	/**
 	 * This method will be called by the VM when a new session is opened to the Trusted Application 
@@ -29,7 +50,7 @@ public class TxeMain extends IntelApplet {
 	public int onInit(byte[] request) {
 		DebugPrint.printString("Hello, DAL!");
 		signer = EccAlg.create(EccAlg.ECC_CURVE_TYPE_SECP256K1);
-		signer.generateKeys();
+		storage =  new EccStorage(new ExamplePersistence());
 		return APPLET_SUCCESS;
 	}
 	
@@ -37,78 +58,72 @@ public class TxeMain extends IntelApplet {
 	 * This method will be called by the VM to handle a command sent to this
 	 * Trusted Application instance.
 	 * 
-	 * @param	commandId	the command ID (Trusted Application specific) 
-	 * @param	request		the input data for this command 
+	 * @param	requestId		the request ID (Trusted Application specific) 
+	 * @param	inputBuffer		the input data for this command 
 	 * @return	the return value should not be used by the applet
 	 */
-	public int invokeCommand(int commandId, byte[] request) {
-		
-		DebugPrint.printString("Received command Id: " + commandId + ".");
-		if(request != null)
-		{
-			DebugPrint.printString("Received buffer:");
-			DebugPrint.printBuffer(request);
+	public int invokeCommand(int requestId, byte[] inputBuffer) {
+		int responseId = 0;
+		byte[] outputBuffer = null;
+
+		switch (requestId) {
+		case CREATE_KEYPAIR:
+			outputBuffer = new byte[COMPRESSED_PUBLIC_KEY_BYTES];
+			responseId = createKeyPair(inputBuffer, outputBuffer);
+			break;
+		case SIGN_BUFFER:
+			outputBuffer = new byte[DIGITAL_SIGNATURE_BYTES];
+			responseId = signBuffer(inputBuffer, outputBuffer);
+			break;
+		default:
+			// Unkown request id.
+			responseId = BAD_REQUEST;
+			outputBuffer = new byte[0];
+			break;
 		}
 		
-		final short sigSize = signer.getSignatureSize();
-		final byte[] sigR = new byte[sigSize];
-		final byte[] sigS = new byte[sigSize];
-		
-		signer.signComplete(request, (short)0, (short)request.length, sigR, (short)0, sigS, (short)0);
-		
-		// sanity check
-		final boolean working = signer.verifyComplete(request, (short)0, (short)request.length, sigR, (short)0, (short)sigR.length, sigS, (short)0, (short)sigS.length);
-		int responseCode = working ? 0 : 1;
-		
-		byte[] myResponse = { 'O', 'K' };
-		
-		// Source: https://bitcoin.stackexchange.com/a/92683
-		// I tested this code on https://kjur.github.io/jsrsasign/sample/sample-ecdsa.html
-		if (commandId == 0) {
-			// Send the public key uncompressed.
-			final EccAlg.CurvePoint pubkey = new EccAlg.CurvePoint(EccAlg.ECC_CURVE_TYPE_SECP256K1);
-			signer.getPublicKey(pubkey);
-			myResponse = new byte[1 + pubkey.x.length + pubkey.y.length];
-			myResponse[0] = 0x04;
-			System.arraycopy(pubkey.x, 0, myResponse, 1, pubkey.x.length);
-			System.arraycopy(pubkey.y, 0, myResponse, pubkey.x.length + 1, pubkey.y.length);
-		} else if (commandId == 1) {
-			// Send the signature.
-			myResponse = new byte[6 + sigSize * 2];
-			myResponse[0] = 0x30;
-			myResponse[1] = (byte)(myResponse.length - 2);
-			myResponse[2] = 0x02;
-			myResponse[3] = (byte)sigSize;
-			System.arraycopy(sigR, 0, myResponse, 4, sigSize);
-			myResponse[4 + sigSize] = 0x02;
-			myResponse[5 + sigSize] = (byte)sigSize;
-			System.arraycopy(sigS, 0, myResponse, 6 + sigSize, sigSize);
-		}
-
-		/*
-		 * To return the response data to the command, call the setResponse
-		 * method before returning from this method. 
-		 * Note that calling this method more than once will 
-		 * reset the response data previously set.
-		 */
-		setResponse(myResponse, 0, myResponse.length);
-
-		/*
-		 * In order to provide a return value for the command, which will be
-		 * delivered to the SW application communicating with the Trusted Application,
-		 * setResponseCode method should be called. 
-		 * Note that calling this method more than once will reset the code previously set. 
-		 * If not set, the default response code that will be returned to SW application is 0.
-		 */
-		setResponseCode(responseCode);
-
-		/*
-		 * The return value of the invokeCommand method is not guaranteed to be
-		 * delivered to the SW application, and therefore should not be used for
-		 * this purpose. Trusted Application is expected to return APPLET_SUCCESS code 
-		 * from this method and use the setResposeCode method instead.
-		 */
+		setResponseCode(responseId);
+		setResponse(outputBuffer, 0, outputBuffer.length);
 		return APPLET_SUCCESS;
+	}
+	
+	
+	public int createKeyPair(final byte[] inputBuffer, final byte[] outputBuffer) {
+		if (inputBuffer.length != SHA1_BYTES) {
+			return BAD_REQUEST;
+		}
+
+		final short privateKeySize = signer.getPrivateKeySize();
+		final byte[] privateKey = new byte[privateKeySize];
+		final EccAlg.CurvePoint publicKey = new EccAlg.CurvePoint(EccAlg.ECC_CURVE_TYPE_SECP256K1);
+
+		signer.generateKeys();
+		signer.getKeys(publicKey, privateKey, (short) 0);
+		compressPublicKey(publicKey, outputBuffer);
+		
+		storage.write(outputBuffer, privateKey, inputBuffer);
+		
+		return OK;
+	}
+
+	public int signBuffer(final byte[] inputBuffer, final byte[] outputBuffer) {
+		return INTERNAL_ERROR;
+	}
+	
+	public void compressPublicKey(final EccAlg.CurvePoint publicKey, final byte[] output) {
+		// Source: https://bitcoin.stackexchange.com/a/92683
+		
+		// Checks if y value is even or odd. y is in big-endian, thus the last byte determines
+		// if it is even or odd.
+		if ((publicKey.y[publicKey.y.length - 1] & 0x01) == 0) {
+			// y value is even.
+			output[0] = 0x02;
+		} else {
+			// y value is odd.
+			output[0] = 0x03;
+		}
+		
+		System.arraycopy(publicKey.x, 0, output, 1, publicKey.x.length);
 	}
 
 	/**
