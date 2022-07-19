@@ -8,6 +8,6 @@ namespace secp256k1_signer_server
 {
     public interface IKeyPairCreator
     {
-        Task<byte[]> CreateKeyPair(byte[] password);
+        Task<byte[]> CreateKeyPair(byte[] hashedPassword);
     }
 }

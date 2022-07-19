@@ -35,20 +35,6 @@ namespace secp256k1_signer_server
                 Console.WriteLine("Starting host...");
                 Console.ReadLine();
             }
-
-            // Send and Receive data to/from the Trusted Application
-            //byte[] sendBuff = Encoding.UTF8.GetBytes("Signature of ECDSA SECP256k1"); // A message to send to the TA
-            //int responseCode; // The return value that the TA provides using the IntelApplet.setResponseCode method
-            //for (int command = 0; command < 2; ++command)
-            //{
-            //    byte[] recvBuff = new byte[2000]; // A buffer to hold the output data from the TA
-            //    Console.WriteLine("Performing send and receive operation with command " + command);
-            //    jhi.SendAndRecv2(session, command, sendBuff, ref recvBuff, out responseCode);
-            //    Console.WriteLine("Response buffer is " + BitConverter.ToString(recvBuff).Replace("-", string.Empty));
-            //    Console.WriteLine("Response buffer length is " + recvBuff.Length);
-            //    Console.WriteLine("Response code is " + responseCode);
-            //}
-
         }
     }
 }
