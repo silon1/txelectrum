@@ -34,7 +34,7 @@ namespace secp256k1_signer_server
             return await Task.Run(() =>
             {
                 byte[] publicKey = new byte[33];
-                m_jhi.SendAndRecv2(m_session, (int)RequestId.CREATE_KEY_PAIR, hashedPassword, ref publicKey, out int responseId);
+                m_jhi.SendAndRecv2(m_session, (int)RequestId.CREATE_KEYPAIR, hashedPassword, ref publicKey, out int responseId);
 
                 if (responseId == (int)ResponseId.OK)
                 {
@@ -91,7 +91,7 @@ namespace secp256k1_signer_server
 
         enum RequestId
         {
-            CREATE_KEY_PAIR,
+            CREATE_KEYPAIR,
             SIGN_BUFFER
         }
 
