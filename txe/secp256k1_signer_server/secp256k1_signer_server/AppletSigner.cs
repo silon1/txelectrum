@@ -63,7 +63,7 @@ namespace secp256k1_signer_server
                     {
                         byte sigLength = outputBuffer[0];
                         byte[] signature = new byte[sigLength];
-                        Array.Copy(outputBuffer, signature, sigLength);
+                        Array.Copy(outputBuffer, 1, signature, 0, sigLength);
                         return signature;
                     }
                     case ResponseId.MISSING_PRIVATE_KEY:
