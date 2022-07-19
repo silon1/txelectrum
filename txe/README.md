@@ -31,8 +31,8 @@ To sign a buffer, the host must send a request with `commandId = 2` and an `inpu
 3. The hashed buffer to sign with SHA-256 algorithm (32 bytes length).
 Overall, the length of `inputBuffer` must be 85 bytes.
 
-The applet must retunr one of the following responses:
-* Response with `responseId = 0` and the digital signature in DER format in `outputBuffer`, if `inputBuffer` meets the following conditions:
+The applet must return one of the following responses:
+* Response with `responseId = 0` and the digital signature in `outputBuffer` (explained below), if `inputBuffer` meets the following conditions:
     * The overall length is 85 bytes.
     * The private key paired with the public key in the `inputBuffer` exists in the secure storage.
     * The hashed password in the `inputBuffer` matches the hashed password protecting the private key.
@@ -40,3 +40,7 @@ The applet must retunr one of the following responses:
 * Response with `responseId = 2` and empty `outputBuffer`, if the applet incountered an internal error.
 * Response with `responseId = 3` and empty `outputBuffer`, if the private key pairing the public key is not in the secure storage.
 * Response with `responseId = 4` and empty `outputBuffer`, if the hashed password doesn't match the hashed password protecting the private key.
+
+The digital signature format will be the following:
+1. The length of the digital signature (1 byte length).
+2. The digital signature in DER format (variable length).
