@@ -50,7 +50,7 @@ public class TxeMain extends IntelApplet {
 	public int onInit(byte[] request) {
 		DebugPrint.printString("Hello, DAL!");
 		signer = EccAlg.create(EccAlg.ECC_CURVE_TYPE_SECP256K1);
-		storage =  new EccStorage(new FlashStoragePersistence());
+		storage =  new EccStorage();
 		return APPLET_SUCCESS;
 	}
 	
@@ -100,7 +100,7 @@ public class TxeMain extends IntelApplet {
 		signer.generateKeys();
 		signer.getKeys(publicKey, privateKey, (short) 0);
 		compressPublicKey(publicKey, outputBuffer);
-		
+
 		storage.write(outputBuffer, privateKey, inputBuffer);
 		
 		return OK;
@@ -119,6 +119,9 @@ public class TxeMain extends IntelApplet {
 		try {
 			final byte[] privateKey = storage.read(publicKey, password);
 			signer.setPrivateKey(privateKey, (short) 0, (short) privateKey.length);
+			EccAlg.CurvePoint pk = new EccAlg.CurvePoint(EccAlg.ECC_CURVE_TYPE_SECP256K1);
+			signer.calculatePublicKey(pk);
+			signer.setPublicKey(pk);
 			
 			final short sigSize = signer.getSignatureSize();
 			final byte[] sigR = new byte[sigSize];
