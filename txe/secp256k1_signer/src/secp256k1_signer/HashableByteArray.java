@@ -2,10 +2,14 @@ package secp256k1_signer;
 
 public class HashableByteArray {
 	
-	private byte[] array;
+	private final int hash;
 	
 	public HashableByteArray(byte[] array) {
-		this.array = array;
+		hash = calcHashCode(array);
+	}
+	
+	public HashableByteArray(int hash) {
+		this.hash = hash;
 	}
 	
 	public boolean equals(Object o) {
@@ -14,8 +18,12 @@ public class HashableByteArray {
 		}
         return hashCode() == o.hashCode();
     }
+	
+	public int hashCode() {
+		return hash;
+	}
 
-    public int hashCode() {
+    private int calcHashCode(byte[] array) {
         if (array == null)
             return 0;
         int result = 1;

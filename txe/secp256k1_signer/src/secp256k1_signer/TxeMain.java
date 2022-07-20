@@ -50,7 +50,7 @@ public class TxeMain extends IntelApplet {
 	public int onInit(byte[] request) {
 		DebugPrint.printString("Hello, DAL!");
 		signer = EccAlg.create(EccAlg.ECC_CURVE_TYPE_SECP256K1);
-		storage =  new EccStorage(new ExamplePersistence());
+		storage =  new EccStorage(new FlashStoragePersistence());
 		return APPLET_SUCCESS;
 	}
 	
