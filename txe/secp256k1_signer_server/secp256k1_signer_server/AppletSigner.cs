@@ -20,7 +20,7 @@ namespace secp256k1_signer_server
 
         public AppletSigner()
         {
-            string appletPath = Path.GetFullPath("../../../../secp256k1_signer/bin/secp256k1_signer.dalp");
+            string appletPath = Path.GetFullPath("../../../../secp256k1_signer/bin/secp256k1_signer-debug.dalp");
             byte[] initBuffer = new byte[] { };
 
             m_jhi = Jhi.Instance;
