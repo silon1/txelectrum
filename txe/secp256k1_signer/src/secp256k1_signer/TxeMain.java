@@ -107,7 +107,32 @@ public class TxeMain extends IntelApplet {
 	}
 
 	public int signBuffer(final byte[] inputBuffer, final byte[] outputBuffer) {
-		return INTERNAL_ERROR;
+		if (inputBuffer.length != COMPRESSED_PUBLIC_KEY_BYTES + SHA1_BYTES + SHA256_BYTES) {
+			return BAD_REQUEST;
+		}
+
+		final byte[] publicKey = new byte[COMPRESSED_PUBLIC_KEY_BYTES];
+		final byte[] password = new byte[SHA1_BYTES];
+		System.arraycopy(inputBuffer, 0, publicKey, 0, publicKey.length);
+		System.arraycopy(inputBuffer, publicKey.length, password, 0, password.length);
+		
+		try {
+			final byte[] privateKey = storage.read(publicKey, password);
+			signer.setPrivateKey(privateKey, (short) 0, (short) privateKey.length);
+			
+			final short sigSize = signer.getSignatureSize();
+			final byte[] sigR = new byte[sigSize];
+			final byte[] sigS = new byte[sigSize];
+			final short hashIndex = (short) (publicKey.length + password.length);
+			signer.signHash(inputBuffer, hashIndex, (short) SHA256_BYTES, sigR, (short) 0, sigS, (short) 0);
+			copyDigitalSignature(sigR, sigS, outputBuffer);
+			
+			return OK;
+		} catch (MissingPrivateKeyError e) {
+			return MISSING_PRIVATE_KEY;
+		} catch (WrongPasswordError e) {
+			return WRONG_PASSWORD;
+		}
 	}
 	
 	public void compressPublicKey(final EccAlg.CurvePoint publicKey, final byte[] output) {
@@ -124,6 +149,21 @@ public class TxeMain extends IntelApplet {
 		}
 		
 		System.arraycopy(publicKey.x, 0, output, 1, publicKey.x.length);
+	}
+	
+	public void copyDigitalSignature(byte[] sigR, byte[] sigS, byte[] outputBuffer) {
+		final byte sigSize = (byte) (6 + sigR.length * 2);
+		outputBuffer[0] = sigSize;
+
+		// Source: https://bitcoin.stackexchange.com/a/92683
+		outputBuffer[1] = 0x30;
+		outputBuffer[2] = (byte) (sigSize -  2);
+		outputBuffer[3] = 0x02;
+		outputBuffer[4] = (byte) sigR.length;
+		System.arraycopy(sigR, 0, outputBuffer, 5, sigR.length);
+		outputBuffer[5 + sigR.length] = 0x02;
+		outputBuffer[6 + sigR.length] = (byte) sigS.length;
+		System.arraycopy(sigS, 0, outputBuffer, 7 + sigR.length, sigS.length);
 	}
 
 	/**
