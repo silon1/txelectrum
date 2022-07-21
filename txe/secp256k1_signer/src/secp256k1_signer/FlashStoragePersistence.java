@@ -2,7 +2,6 @@ package secp256k1_signer;
 
 import java.util.Hashtable;
 
-import com.intel.util.DebugPrint;
 import com.intel.util.FlashStorage;
 
 public class FlashStoragePersistence implements Persistence {
