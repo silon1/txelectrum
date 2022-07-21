@@ -47,7 +47,7 @@ public class TxeMain extends IntelApplet {
 	 * 		any other error status code otherwise (note that all error codes will be
 	 * 		treated similarly by the VM by sending "cancel" error code to the SW application).
 	 */
-	public int onInit(byte[] request) {
+	public int onInit(final byte[] request) {
 		DebugPrint.printString("Hello, DAL!");
 		signer = EccAlg.create(EccAlg.ECC_CURVE_TYPE_SECP256K1);
 		storage =  new EccStorage();
@@ -62,7 +62,7 @@ public class TxeMain extends IntelApplet {
 	 * @param	inputBuffer		the input data for this command 
 	 * @return	the return value should not be used by the applet
 	 */
-	public int invokeCommand(int requestId, byte[] inputBuffer) {
+	public int invokeCommand(final int requestId, final byte[] inputBuffer) {
 		int responseId = 0;
 		byte[] outputBuffer = null;
 
@@ -111,22 +111,24 @@ public class TxeMain extends IntelApplet {
 			return BAD_REQUEST;
 		}
 
-		final byte[] publicKey = new byte[COMPRESSED_PUBLIC_KEY_BYTES];
-		final byte[] password = new byte[SHA1_BYTES];
-		System.arraycopy(inputBuffer, 0, publicKey, 0, publicKey.length);
-		System.arraycopy(inputBuffer, publicKey.length, password, 0, password.length);
+		final byte[] compressedPublicKey = new byte[COMPRESSED_PUBLIC_KEY_BYTES];
+		final byte[] hashedPassword = new byte[SHA1_BYTES];
+		System.arraycopy(inputBuffer, 0, compressedPublicKey, 0, compressedPublicKey.length);
+		System.arraycopy(inputBuffer, compressedPublicKey.length, hashedPassword, 0, hashedPassword.length);
 		
 		try {
-			final byte[] privateKey = storage.read(publicKey, password);
+			final byte[] privateKey = storage.read(compressedPublicKey, hashedPassword);
 			signer.setPrivateKey(privateKey, (short) 0, (short) privateKey.length);
-			EccAlg.CurvePoint pk = new EccAlg.CurvePoint(EccAlg.ECC_CURVE_TYPE_SECP256K1);
-			signer.calculatePublicKey(pk);
-			signer.setPublicKey(pk);
+			
+			// EccAlg must recalculate and initalize the public key before signing the hash.
+			EccAlg.CurvePoint publicKey = new EccAlg.CurvePoint(EccAlg.ECC_CURVE_TYPE_SECP256K1);
+			signer.calculatePublicKey(publicKey);
+			signer.setPublicKey(publicKey);
 			
 			final short sigSize = signer.getSignatureSize();
 			final byte[] sigR = new byte[sigSize];
 			final byte[] sigS = new byte[sigSize];
-			final short hashIndex = (short) (publicKey.length + password.length);
+			final short hashIndex = (short) (compressedPublicKey.length + hashedPassword.length);
 			signer.signHash(inputBuffer, hashIndex, (short) SHA256_BYTES, sigR, (short) 0, sigS, (short) 0);
 			copyDigitalSignature(sigR, sigS, outputBuffer);
 			
@@ -154,7 +156,7 @@ public class TxeMain extends IntelApplet {
 		System.arraycopy(publicKey.x, 0, output, 1, publicKey.x.length);
 	}
 	
-	public void copyDigitalSignature(byte[] sigR, byte[] sigS, byte[] outputBuffer) {
+	public void copyDigitalSignature(final byte[] sigR, final byte[] sigS, final byte[] outputBuffer) {
 		final byte sigSize = (byte) (6 + sigR.length * 2);
 		outputBuffer[0] = sigSize;
 
