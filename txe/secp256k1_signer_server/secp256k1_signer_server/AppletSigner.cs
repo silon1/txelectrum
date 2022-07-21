@@ -10,7 +10,7 @@ namespace secp256k1_signer_server
 {
     public class AppletSigner : IKeyPairCreator, IBufferSigner, IDisposable
     {
-        // Note: The design note of the protocol between the host and the protocol can be found in `/txe/README.md`.
+        // Note: The design note of the protocol between the host and the applet can be found in `/txe/README.md`.
 
         private const string APPLET_ID = "e48e7440-4f22-4639-bae5-7216d720347e";
 
