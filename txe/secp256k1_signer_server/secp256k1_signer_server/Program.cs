@@ -33,6 +33,7 @@ namespace secp256k1_signer_server
             {
                 host.Start();
                 Console.WriteLine("Starting host...");
+                Console.WriteLine("Press ENTER to exit...");
                 Console.ReadLine();
             }
         }

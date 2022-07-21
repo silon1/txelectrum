@@ -53,7 +53,7 @@ namespace secp256k1_signer_server
                     return publicKey;
                 }
 
-                throw new Exception($"Applet responsed with code {responseId}.");
+                throw new Exception($"Applet responsed with id {responseId} ({(ResponseId)responseId}) on request CREATE_KEYPAIR.");
             });
         }
 
@@ -83,7 +83,7 @@ namespace secp256k1_signer_server
                     case ResponseId.WRONG_PASSWORD:
                         throw new WrongPasswordError();
                     default:
-                        throw new Exception($"Applet responsed with id {responseId}.");
+                        throw new Exception($"Applet responsed with id {responseId} ({(ResponseId)responseId}) on request SIGN_BUFFER.");
                 }
             });
         }
