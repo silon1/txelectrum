@@ -2,7 +2,6 @@ package secp256k1_signer;
 
 import com.intel.util.*;
 import com.intel.crypto.*;
-import com.intel.langutil.ArrayUtils;
 
 //
 // Implementation of DAL Trusted Application: secp256k1_signer 
@@ -66,20 +65,25 @@ public class TxeMain extends IntelApplet {
 		int responseId = 0;
 		byte[] outputBuffer = null;
 
-		switch (requestId) {
-		case CREATE_KEYPAIR:
-			outputBuffer = new byte[COMPRESSED_PUBLIC_KEY_BYTES];
-			responseId = createKeyPair(inputBuffer, outputBuffer);
-			break;
-		case SIGN_BUFFER:
-			outputBuffer = new byte[DIGITAL_SIGNATURE_BYTES];
-			responseId = signBuffer(inputBuffer, outputBuffer);
-			break;
-		default:
-			// Unkown request id.
-			responseId = BAD_REQUEST;
+		try {
+			switch (requestId) {
+			case CREATE_KEYPAIR:
+				outputBuffer = new byte[COMPRESSED_PUBLIC_KEY_BYTES];
+				responseId = createKeyPair(inputBuffer, outputBuffer);
+				break;
+			case SIGN_BUFFER:
+				outputBuffer = new byte[DIGITAL_SIGNATURE_BYTES];
+				responseId = signBuffer(inputBuffer, outputBuffer);
+				break;
+			default:
+				// Unkown request id.
+				responseId = BAD_REQUEST;
+				outputBuffer = new byte[0];
+				break;
+			}
+		} catch (Exception e) {
+			responseId = INTERNAL_ERROR;
 			outputBuffer = new byte[0];
-			break;
 		}
 		
 		setResponseCode(responseId);
