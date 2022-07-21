@@ -10,11 +10,11 @@ public class FlashStoragePersistence implements Persistence {
 	private static final int CONTENT_FILE = 1;
 	private static final int MAPPER_ENTRY_BYTES = 12;
 	
-	private final Hashtable<HashableByteArray, Metadata> mapper;
+	private final Hashtable<ByteArrayHash, Metadata> mapper;
 	
 	private class Metadata {
-		public int offset;
-		public int length;
+		public final int offset;
+		public final int length;
 		
 		public Metadata(int offset, int length) {
 			this.offset = offset;
@@ -23,7 +23,7 @@ public class FlashStoragePersistence implements Persistence {
 	}
 	
 	public FlashStoragePersistence() {
-		mapper = new Hashtable<HashableByteArray, Metadata>();
+		mapper = new Hashtable<ByteArrayHash, Metadata>();
 		
 		final int fileSize = FlashStorage.getFlashDataSize(MAPPER_FILE);
 		if (fileSize == 0) {
@@ -39,26 +39,26 @@ public class FlashStoragePersistence implements Persistence {
 		
 		for (int i = 0; i < prevMapper.length; i += MAPPER_ENTRY_BYTES) {
 			final int hash = bytesToInt(prevMapper, i);
-			final HashableByteArray hashableId = new HashableByteArray(hash);
+			final ByteArrayHash identifierHash = new ByteArrayHash(hash);
 			final int offset = bytesToInt(prevMapper, i + 4);
 			final int length = bytesToInt(prevMapper, i + 8);
-			mapper.put(hashableId, new Metadata(offset, length));
+			mapper.put(identifierHash, new Metadata(offset, length));
 		}
 	}
 
-	public void write(byte[] identifier, byte[] content) {
+	public void write(final byte[] identifier, final byte[] content) {
 		// Writing the content into the CONTENT_FILE, and updating the mapper.
 		
 		final int contentOffset = FlashStorage.getFlashDataSize(CONTENT_FILE);
-		byte[] newContentFile = new byte[contentOffset + content.length];
+		final byte[] newContentFile = new byte[contentOffset + content.length];
 		if (contentOffset != 0) {
 			// The file CONTENT_FILE exists. Read the previous contents to
 			// append the new content to the end.
 			FlashStorage.readFlashData(CONTENT_FILE, newContentFile, 0);
 		}
 
-		final HashableByteArray hashableId = new HashableByteArray(identifier);
-		mapper.put(hashableId, new Metadata(contentOffset, content.length));
+		final ByteArrayHash identifierHash = new ByteArrayHash(identifier);
+		mapper.put(identifierHash, new Metadata(contentOffset, content.length));
 		
 		System.arraycopy(content, 0, newContentFile, contentOffset, content.length);
 		FlashStorage.writeFlashData(CONTENT_FILE, newContentFile, 0, newContentFile.length);
@@ -81,15 +81,15 @@ public class FlashStoragePersistence implements Persistence {
 		}
 
 		final int index = savedMapper.length - MAPPER_ENTRY_BYTES;
-		intToBytes(hashableId.hashCode(), savedMapper, index);
+		intToBytes(identifierHash.hashCode(), savedMapper, index);
 		intToBytes(contentOffset, savedMapper, index + 4);
 		intToBytes(content.length, savedMapper, index + 8);
 		FlashStorage.writeFlashData(MAPPER_FILE, savedMapper, 0, savedMapper.length);
 	}
 
-	public byte[] read(byte[] identifier) {
-		final HashableByteArray hashableId = new HashableByteArray(identifier);
-		final Metadata metadata = mapper.get(hashableId);
+	public byte[] read(final byte[] identifier) {
+		final ByteArrayHash identifierHash = new ByteArrayHash(identifier);
+		final Metadata metadata = mapper.get(identifierHash);
 		if (metadata == null) {
 			return null;
 		}
@@ -103,7 +103,7 @@ public class FlashStoragePersistence implements Persistence {
 		return content;
 	}
 	
-	private int bytesToInt(byte[] bytes, int offset) {
+	private int bytesToInt(final byte[] bytes, final int offset) {
 		// Source: https://stackoverflow.com/a/7619315
 		return ((bytes[offset + 0] & 0xFF) << 0 ) | 
 			   ((bytes[offset + 1] & 0xFF) << 8 ) | 
@@ -111,7 +111,7 @@ public class FlashStoragePersistence implements Persistence {
 			   ((bytes[offset + 3] & 0xFF) << 24);
 	}
 	
-	private void intToBytes(int value, byte[] bytes, int offset) {
+	private void intToBytes(final int value, final byte[] bytes, final int offset) {
 		// Source: https://stackoverflow.com/a/7619315
 		bytes[offset + 0] = (byte)(value >> 0 );
 	    bytes[offset + 1] = (byte)(value >> 8 );

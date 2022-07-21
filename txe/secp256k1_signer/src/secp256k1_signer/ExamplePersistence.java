@@ -6,15 +6,15 @@ import java.util.Vector;
 public class ExamplePersistence implements Persistence {
 	
 	private final Vector<byte[]> filesContent;
-	private final Hashtable<HashableByteArray, Integer> mapper;
+	private final Hashtable<ByteArrayHash, Integer> mapper;
 	
 	public ExamplePersistence() {
-		mapper = new Hashtable<HashableByteArray, Integer>();
+		mapper = new Hashtable<ByteArrayHash, Integer>();
 		filesContent = new Vector<byte[]>();
 	}
 
 	public void write(byte[] identifier, byte[] content) {
-		final HashableByteArray hashableId = new HashableByteArray(identifier);
+		final ByteArrayHash hashableId = new ByteArrayHash(identifier);
 		final int index = mapper.contains(hashableId) ? mapper.get(hashableId) : filesContent.size();
 		mapper.put(hashableId, index);
 
@@ -24,7 +24,7 @@ public class ExamplePersistence implements Persistence {
 	}
 
 	public byte[] read(byte[] identifier) {
-		final HashableByteArray hashableId = new HashableByteArray(identifier);
+		final ByteArrayHash hashableId = new ByteArrayHash(identifier);
 		final Integer index = mapper.get(hashableId);
 		if (index == null) {
 			return null;
