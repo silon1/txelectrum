@@ -17,6 +17,12 @@ namespace secp256k1_signer_server
             var signer = new AppletSigner();
             container.Register<IKeyPairCreator, AppletSigner>(signer);
             container.Register<IBufferSigner, AppletSigner>(signer);
+
+            pipelines.OnError += (ctx, e) =>
+            {
+                Console.WriteLine(e);
+                return HttpStatusCode.InternalServerError;
+            };
         }
     }
 }
