@@ -13,6 +13,7 @@ namespace secp256k1_signer_server
         // Note: The design note of the protocol between the host and the applet can be found in `/txe/README.md`.
 
         private const string APPLET_ID = "e48e7440-4f22-4639-bae5-7216d720347e";
+        private const string APPLET_DIR = "../../../../secp256k1_signer/bin";
 
         private Jhi m_jhi;
         private JhiSession m_session;
@@ -20,7 +21,18 @@ namespace secp256k1_signer_server
 
         public AppletSigner()
         {
-            string appletPath = Path.GetFullPath("../../../../secp256k1_signer/bin/secp256k1_signer-debug.dalp");
+            string appletPath = Path.GetFullPath($"{APPLET_DIR}/secp256k1_signer.dalp");
+            if (!File.Exists(appletPath))
+            {
+                // Maybe the applet was built for debugging. In this case, the file name is secp256k1_signer-debug.dalp.
+                appletPath = Path.GetFullPath($"{APPLET_DIR}/secp256k1_signer-debug.dalp");
+                if (!File.Exists(appletPath))
+                {
+                    // The applet wasn't built yet.
+                    throw new FileNotFoundException("The applet binary was not found. First build the applet before running the host.");
+                }
+            }
+
             byte[] initBuffer = new byte[] { };
 
             m_jhi = Jhi.Instance;
