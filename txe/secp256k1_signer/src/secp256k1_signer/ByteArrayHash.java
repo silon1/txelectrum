@@ -1,19 +1,19 @@
 package secp256k1_signer;
 
-public class HashableByteArray {
+public class ByteArrayHash {
 	
 	private final int hash;
 	
-	public HashableByteArray(byte[] array) {
+	public ByteArrayHash(final byte[] array) {
 		hash = calcHashCode(array);
 	}
 	
-	public HashableByteArray(int hash) {
+	public ByteArrayHash(final int hash) {
 		this.hash = hash;
 	}
 	
-	public boolean equals(Object o) {
-		if (o == null || !(o instanceof HashableByteArray)) {
+	public boolean equals(final Object o) {
+		if (o == null || !(o instanceof ByteArrayHash)) {
 			return false;
 		}
         return hashCode() == o.hashCode();
@@ -23,7 +23,9 @@ public class HashableByteArray {
 		return hash;
 	}
 
-    private int calcHashCode(byte[] array) {
+    private int calcHashCode(final byte[] array) {
+    	// Copied from http://hg.openjdk.java.net/jdk8/jdk8/jdk/file/687fd7c7986d/src/share/classes/java/util/Arrays.java
+
         if (array == null)
             return 0;
         int result = 1;
