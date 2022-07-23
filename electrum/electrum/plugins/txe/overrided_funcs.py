@@ -8,7 +8,7 @@ from electrum.keystore import Software_KeyStore
 from electrum.transaction import PartialTransaction, Sighash
 from electrum.util import UserCancelled, bfh, bh2u
 
-from .send_trans import send_trans, Pwd
+from .send_trans import send_trans, Pwd, TX
 from .txe_client import txe_sign
 from ...gui.qt.confirm_tx_dialog import ConfirmTxDialog
 from ...gui.qt.transaction_dialog import PreviewTxDialog
@@ -28,7 +28,9 @@ class _ConfirmTxDialog:
     def on_send(self):
         self.is_send = True
         self.accept()
-
+class PublicKeyNotFoundException(Exception):
+    def __init__(self, msg):
+        super().__init__(msg)
 
 class _SendTab:
     """
@@ -84,7 +86,7 @@ class _SendTab:
         cancelled, is_send, password, tx = conf_dlg.run()
         Pwd.p = password
         if cancelled:
-            return
+            raise PublicKeyNotFoundException()
         if is_send:
             self.save_pending_invoice()
 
@@ -124,6 +126,15 @@ class _Abstract_Wallet:
         if not isinstance(tx, PartialTransaction):
             return
 
+        pk = self.db.get('keystore').get('keypairs')
+        print(pk)
+        if not pk:
+            raise electrum.e()
+        # tkp = {}
+        # for k, v in pk.items():
+        #     tkp[bytes.fromhex(k)] = bytes.fromhex(v or k)
+        tx.inputs()[0].pubkeys = [bytes.fromhex(k) for k in pk.keys()]
+
         swap = self.lnworker.swap_manager.get_swap_by_tx(tx) if self.lnworker else None
         if swap:
             self.lnworker.swap_manager.sign_tx(tx, swap)
@@ -142,7 +153,7 @@ class _Abstract_Wallet:
         tmp_tx.remove_xpubs_and_bip32_paths()
         tx.combine_with_other_psbt(tmp_tx)
         tx.add_info_from_wallet(self, include_xpubs=False)
-        send_trans(tx)
+        send_trans(TX.from_tx(tx).create())
 
 
 class _Software_KeyStore:
@@ -188,6 +199,7 @@ class _PartialTransaction:
         """
         txin = self.inputs()[txin_index]
         txin.validate_data(for_signing=True)
+        txin.script_type = 'p2pkh'
         sighash = txin.sighash if txin.sighash is not None else Sighash.ALL
         sighash_type = sighash.to_bytes(length=1, byteorder="big").hex()
         pre_hash = sha256d(bfh(self.serialize_preimage(txin_index,

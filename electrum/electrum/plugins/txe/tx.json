@@ -1,0 +1,57 @@
+{
+  'version': 2,
+  'locktime': 2287273,
+  'inputs': [
+    {
+      'prevout_hash': 'd3237cc5f21c3ce7901d245beef1916b4f1269ed67f2f04c22e4575397bdfed4',
+      'prevout_n': 1,
+      'coinbase': False,
+      'nsequence': 4294967293,
+      'scriptSig': '',
+      'witness': '0247304402203835e3e9b180a4a3fb3f74bf0d6a280d71ea80ec5b29e5d8a74784f20f85057d0220450169bea4b33a5e0f6eae891c30acad9e848bc92d04c95544f8e78e09887fe40121022fdd80a654b8967d3330b691465f20e1a477780bbfc5eb1309ebe3ac7b857c5c',
+      'height': 2287069,
+      'value_sats': 2233000,
+      'address': 'tb1q3mvxrgvr2qnlet68kfkg4kdzmwf7x8kwhz3a6f',
+      'utxo': '020000000001016070f15c563238ee2e84ba795298407759fdb08df5ce4beb3c76a79079b6125b0100000000fdffffff0240420f00000000001976a91494b083576f267d1c1f076804be928b67a5ca2d7888aca8122200000000001600148ed861a1835027fcaf47b26c8ad9a2db93e31ece02473044022044f349e41df23b8e091f2953792ef2c8c991c566fcbbb97e65127e1eb0972d5402200ed168edbfe0f912508d5a2869d5e19c3c7f858d9c2eb636579856c3bd1c4e2e012103506b0e1d7a69f1919b39dd89dfda8abbe0e4ba3708a23021f20124f4254e190cdbe52200',
+      'witness_utxo': None,
+      'sighash': None,
+      'redeem_script': None,
+      'witness_script': None,
+      'part_sigs': {},
+      'bip32_paths': {},
+      'unknown_psbt_fields': {}
+    }
+  ],
+  'outputs': [
+    {
+      'scriptpubkey': '0014583049ad1e6ee792659467cc6178d82ea6bd0eac',
+      'address': 'tb1qtqcyntg7dmneyev5vlxxz7xc96nt6r4vf2jkzt',
+      'value_sats': 500000,
+      'redeem_script': None,
+      'witness_script': None,
+      'bip32_paths': {
+        '0250e9a61b3b8cf7887e441ad92c93e035eac94fbf76b3f108748d1611bec7dbc8': (
+        'fb6475da',
+        "m/0'/1/6"
+        )
+      },
+      'unknown_psbt_fields': {}
+    },
+    {
+      'scriptpubkey': '0014d791ff1f0af94abe85b29142c2bea1c373ccebeb',
+      'address': 'tb1q67gl78c2l99tapdjj9pv904pcdeue6ltmrr4uq',
+      'value_sats': 1732800,
+      'redeem_script': None,
+      'witness_script': None,
+      'bip32_paths': {
+        '039d940b62c1ea98663e82818a226b130a99fdaec03c1220cc7131e8f1f2791260': (
+        'fb6475da',
+        "m/0'/1/9"
+        )
+      },
+      'unknown_psbt_fields': {}
+    }
+  ],
+  'xpubs': {},
+  'unknown_psbt_fields': {}
+}
