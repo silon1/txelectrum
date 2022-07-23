@@ -63,7 +63,7 @@ class TX:
                TX.txin_count + \
                self.txin_out_id + \
                TX.txin_out_index + \
-               TX.txout_sig_script_len + \
+               TX.txin_sig_script_len + \
                TX.push_72 + \
                self.txin_sig + \
                TX.seq_count + \
