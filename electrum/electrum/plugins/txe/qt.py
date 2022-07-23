@@ -89,8 +89,6 @@ def show_pubkey(win, pubkey):
 class Plugin(BasePlugin):
     def __init__(self, parent, config: 'SimpleConfig', name):
         super().__init__(parent, config, name)
-        a = Transaction('020000000001016070f15c563238ee2e84ba795298407759fdb08df5ce4beb3c76a79079b6125b0100000000fdffffff0240420f00000000001976a91494b083576f267d1c1f076804be928b67a5ca2d7888aca8122200000000001600148ed861a1835027fcaf47b26c8ad9a2db93e31ece02473044022044f349e41df23b8e091f2953792ef2c8c991c566fcbbb97e65127e1eb0972d5402200ed168edbfe0f912508d5a2869d5e19c3c7f858d9c2eb636579856c3bd1c4e2e012103506b0e1d7a69f1919b39dd89dfda8abbe0e4ba3708a23021f20124f4254e190cdbe52200')
-        b = a
 
     @hook
     def load_wallet(self, wallet: electrum.wallet.Abstract_Wallet, main_window: ElectrumWindow):
