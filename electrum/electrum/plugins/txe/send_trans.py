@@ -33,17 +33,12 @@ class TX:
     seq_count = 'ff' * 4
     txout_count = '01'
     txout_sig_script_len = '19'
-    dup = '76'
-    hash_160 = 'a9'
-    push_20 = '14'
-    eq = '88'
-    check_sig = 'ac'
 
-    def __init__(self, txin_out_id, txin_sig, txout_sat, txout_pk_hash, lock_time):
+    def __init__(self, txin_out_id, txin_sig, txout_sat, txout_sig_script, lock_time):
         self.txin_out_id = txin_out_id
         self.txin_sig = txin_sig
         self.txout_sat = txout_sat
-        self.txout_pk_hash = txout_pk_hash
+        self.txout_sig_script = txout_sig_script
         self.lock_time = lock_time
 
     @staticmethod
@@ -63,17 +58,12 @@ class TX:
                TX.txin_count + \
                self.txin_out_id + \
                TX.txin_out_index + \
-               TX.txin_sig_script_len + \
+               TX.txout_sig_script_len + \
                TX.push_72 + \
                self.txin_sig + \
                TX.seq_count + \
                TX.txout_count + \
                self.txout_sat + \
                TX.txout_sig_script_len + \
-               TX.dup + \
-               TX.hash_160 + \
-               TX.push_20 + \
-               self.txout_pk_hash + \
-               TX.eq + \
-               TX.check_sig + \
+               self.txout_sig_script + \
                self.lock_time
