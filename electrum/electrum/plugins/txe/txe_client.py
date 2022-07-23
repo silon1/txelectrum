@@ -28,8 +28,7 @@ import hashlib
 __BASE_URL = "http://localhost:51841"
 
 
-def create_keypair(password:str) -> bytes:
-    return '123'
+def create_keypair(password: str) -> str:
     """
     Requests the server to create a new key pair using the secp256k1
     algorithm. The private key will be protected with the given password.
@@ -48,7 +47,7 @@ def create_keypair(password:str) -> bytes:
         response = requests.post(f"{__BASE_URL}/create_keypair", json=req_body)
         response.raise_for_status()
         pubkey = response.json()["public_key"]
-        return bytes.fromhex(pubkey)
+        return pubkey
 
     except Exception as e:
 
@@ -56,8 +55,6 @@ def create_keypair(password:str) -> bytes:
 
 
 def txe_sign(buffer:bytes, password:str, pubkey:bytes) -> bytes:
-    print(password)
-    exit()
     """
     Requests the server to sign the buffer with the pair of the public key
     and a selected hash function.
@@ -83,7 +80,7 @@ def txe_sign(buffer:bytes, password:str, pubkey:bytes) -> bytes:
     hashed_buffer = hashlib.sha256(buffer).hexdigest()
 
     req_body = {
-        "public_key": pubkey.hex(),
+        "public_key": pubkey,
         "hashed_password": hashed_password,
         "hashed_buffer": hashed_buffer,
     }
