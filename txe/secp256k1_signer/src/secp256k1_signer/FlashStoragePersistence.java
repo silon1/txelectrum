@@ -52,7 +52,7 @@ public class FlashStoragePersistence implements Persistence {
 		final byte[] newContentFile = new byte[contentOffset + content.length];
 		if (contentOffset != 0) {
 			// The file CONTENT_FILE exists. Read the previous contents to
-			// append the new content to the end.
+			// append the new content at the end.
 			FlashStorage.readFlashData(CONTENT_FILE, newContentFile, 0);
 		}
 
