@@ -161,18 +161,25 @@ public class TxeMain extends IntelApplet {
 	}
 	
 	public void copyDigitalSignature(final byte[] sigR, final byte[] sigS, final byte[] outputBuffer) {
-		final byte sigSize = (byte) (6 + sigR.length * 2);
+		// Source: https://bitcoin.stackexchange.com/a/92683
+
+		final byte sigRLength = (byte) ((sigR[0] & 0xFF) <= 0x7F ? sigR.length : sigR.length + 1);
+		final byte sigSLength = (byte) ((sigS[0] & 0xFF) <= 0x7F ? sigS.length : sigS.length + 1);
+		final byte sigSize = (byte) (6 + sigRLength + sigSLength);
+
+		// Not part of DER format; It's a part of the protocol between the applet and the host.
 		outputBuffer[0] = sigSize;
 
-		// Source: https://bitcoin.stackexchange.com/a/92683
 		outputBuffer[1] = 0x30;
 		outputBuffer[2] = (byte) (sigSize -  2);
 		outputBuffer[3] = 0x02;
-		outputBuffer[4] = (byte) sigR.length;
-		System.arraycopy(sigR, 0, outputBuffer, 5, sigR.length);
-		outputBuffer[5 + sigR.length] = 0x02;
-		outputBuffer[6 + sigR.length] = (byte) sigS.length;
-		System.arraycopy(sigS, 0, outputBuffer, 7 + sigR.length, sigS.length);
+		outputBuffer[4] = sigRLength;
+		outputBuffer[5] = 0;
+		System.arraycopy(sigR, 0, outputBuffer, 5 + sigRLength - sigR.length, sigR.length);
+		outputBuffer[5 + sigRLength] = 0x02;
+		outputBuffer[6 + sigRLength] = sigSLength;
+		outputBuffer[7 + sigRLength] = 0;
+		System.arraycopy(sigS, 0, outputBuffer, 7 + sigRLength + sigSLength - sigS.length, sigS.length);
 	}
 
 	/**
