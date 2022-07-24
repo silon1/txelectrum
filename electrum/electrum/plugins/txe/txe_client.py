@@ -21,11 +21,13 @@ Example Usage:
 """
 
 # The REST api is explained at `/openapi.yaml`.
+# MOCK server at https://stoplight.io/mocks/yonieuler/secp256k1-signer/74513382
 
 import requests
 import hashlib
 
 __BASE_URL = "http://localhost:51841"
+__BASE_URL = "https://stoplight.io/mocks/yonieuler/secp256k1-signer/74513382"
 
 
 def create_keypair(password: str) -> str:
