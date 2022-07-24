@@ -12,9 +12,7 @@ from .send_trans import send_trans, Pwd, TX
 from .txe_client import txe_sign
 from ...gui.qt.confirm_tx_dialog import ConfirmTxDialog
 from ...gui.qt.transaction_dialog import PreviewTxDialog
-from ...gui.qt.util import WWLabel
 from ...i18n import _
-from ...plugin import run_hook
 from ...transaction import PartialTxInput, PartialTxOutput
 from ...util import parse_max_spend
 
@@ -28,9 +26,12 @@ class _ConfirmTxDialog:
     def on_send(self):
         self.is_send = True
         self.accept()
+
+
 class PublicKeyNotFoundException(Exception):
     def __init__(self, msg):
         super().__init__(msg)
+
 
 class _SendTab:
     """
@@ -130,10 +131,8 @@ class _Abstract_Wallet:
         print(pk)
         if not pk:
             raise electrum.e()
-        # tkp = {}
-        # for k, v in pk.items():
-        #     tkp[bytes.fromhex(k)] = bytes.fromhex(v or k)
-        tx.inputs()[0].pubkeys = [bytes.fromhex(k) for k in pk.keys()]
+        for i in tx.inputs():
+            i.pubkeys = [bytes.fromhex(k) for k in pk.keys()]
 
         swap = self.lnworker.swap_manager.get_swap_by_tx(tx) if self.lnworker else None
         if swap:

@@ -16,11 +16,9 @@ from .overrided_funcs import _Abstract_Wallet, _SendTab
 from electrum.i18n import _
 
 from .send_trans import Pwd
-from .txe_client import create_keypair
-from ...gui.qt.password_dialog import PasswordDialog, PasswordLayout
+from ...gui.qt.password_dialog import PasswordLayout
 from ...gui.qt.qrtextedit import ShowQRTextEdit
-from ...gui.qt.util import WindowModalDialog, Buttons, CancelButton, OkButton, PasswordLineEdit, WWLabel
-from ...transaction import PartialTransaction, Transaction
+from ...gui.qt.util import WindowModalDialog, Buttons, CancelButton, WWLabel
 
 
 def add_pubkey(win):
@@ -117,7 +115,7 @@ class Plugin(BasePlugin):
             if wallet.wallet_type == 'imported':
                 wallet.txin_type = 'p2pkh'
                 if not keys:
-                    p = add_pubkey(main_window)
+                    _, p = add_pubkey(main_window)
                     if p:
                         pk = {
                             'type': 'imported',

@@ -1,4 +1,5 @@
 import os, subprocess
+import textwrap
 
 from electrum.transaction import PartialTransaction
 
@@ -25,45 +26,54 @@ def send_trans(tx):
 
 
 class TX:
-    version = '02000000'
-    txin_count = '01'
-    txin_out_index = '00' * 4
-    txin_sig_script_len = '49'
-    push_72 = '48'
-    seq_count = 'ff' * 4
-    txout_count = '01'
-    txout_sig_script_len = '19'
+    version_zf = 4 * 2
+    sat_zf = 8 * 2
+    txin_index_zf = 4 * 2
+    flags = 'fdffffff'
+    locktime_zf = 4 * 2
 
-    def __init__(self, txin_out_id, txin_sig, txout_sat, txout_sig_script, lock_time):
-        self.txin_out_id = txin_out_id
-        self.txin_sig = txin_sig
-        self.txout_sat = txout_sat
-        self.txout_sig_script = txout_sig_script
-        self.lock_time = lock_time
+    def __init__(self, version, txins, txouts, lock_time):
+        self.version = ith(version, True, TX.version_zf)
+        self.txins = txins
+        self.txouts = txouts
+        self.lock_time = ith(lock_time, True, TX.locktime_zf)
+
+    def _in(self):
+        utxo = ith(len(self.txins))
+        for i in self.txins:
+            utxo += lendian(i['prevout_hash'])
+            utxo += ith(i['prevout_n'], True, TX.sat_zf)
+            for _, sig in i['part_sigs'].items():
+                utxo += sig
+            utxo += TX.flags
+        return utxo
+
+    def _out(self):
+        s = ith(len(self.txouts))
+        for o in self.txouts:
+            s += ith(o['value_sats'], True, TX.sat_zf)
+            s += ith(len(o['scriptpubkey']), zf=2)
+            s += o['scriptpubkey']
+        return s
 
     @staticmethod
     def from_tx(tx: PartialTransaction):
         tx = tx.to_json()
-        txin = tx['inputs'][0]
-        txout = tx['outputs'][0]
-        ith = lambda i: '0' * (len(s := hex(i)[2:]) % 2) + s
-        return TX(txin['prevout_hash'],
-                  [s for s in tx['inputs'][0]['part_sigs'].values()][0],
-                  ith(txout['value_sats']).zfill(16),
-                  txout['scriptpubkey'],
-                  ith(tx['locktime']))
+        version = tx['version']
+        txins = tx['inputs']
+        txouts = tx['outputs']
+        locktime = tx['locktime']
+        return TX(version, txins, txouts, locktime)
 
     def create(self):
-        return TX.version + \
-               TX.txin_count + \
-               self.txin_out_id + \
-               TX.txin_out_index + \
-               TX.txout_sig_script_len + \
-               TX.push_72 + \
-               self.txin_sig + \
-               TX.seq_count + \
-               TX.txout_count + \
-               self.txout_sat + \
-               TX.txout_sig_script_len + \
-               self.txout_sig_script + \
-               self.lock_time
+        return self.version + self._in() + self._out() + self.lock_time
+
+
+def lendian(x):
+    return ''.join(textwrap.wrap(x, 2)[::-1])
+
+
+def ith(i, little=False, zf=0):
+    x = '0' * (len(s := hex(i)[2:]) % 2) + s
+    x = x.zfill(zf) if zf else x
+    return lendian(x) if little else x
