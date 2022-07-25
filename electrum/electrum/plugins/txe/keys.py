@@ -20,6 +20,7 @@ def base58(address_hex):
         b58_string = '1' + b58_string
     return b58_string
 
+
 def genaddr(pubkey, net):
     if net not in ("testnet", "mainnet"):
         raise ValueError("net must be testnet or mainnet")

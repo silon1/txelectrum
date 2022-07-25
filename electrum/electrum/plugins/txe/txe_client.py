@@ -27,7 +27,7 @@ import requests
 import hashlib
 
 __BASE_URL = "http://localhost:51841"
-__BASE_URL = "https://stoplight.io/mocks/yonieuler/secp256k1-signer/74513382"
+#__BASE_URL = "https://stoplight.io/mocks/yonieuler/secp256k1-signer/74513382"
 
 
 def create_keypair(password: str) -> str:

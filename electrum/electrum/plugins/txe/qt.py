@@ -1,9 +1,6 @@
 import inspect
 
-from PyQt5.QtCore import QRect
-from PyQt5.QtWidgets import QMessageBox, QLabel, QVBoxLayout, QPushButton, QWidget, QGridLayout, QLineEdit, QHBoxLayout, \
-    QPlainTextEdit, QTextEdit
-import base58
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QTextEdit
 
 import electrum
 from types import MethodType
@@ -16,6 +13,7 @@ from .overrided_funcs import _Abstract_Wallet, _SendTab
 from electrum.i18n import _
 
 from .send_trans import Pwd
+from .txe_client import create_keypair
 from ...gui.qt.password_dialog import PasswordLayout
 from ...gui.qt.qrtextedit import ShowQRTextEdit
 from ...gui.qt.util import WindowModalDialog, Buttons, CancelButton, WWLabel
@@ -71,7 +69,7 @@ def show_pubkey(win, pubkey):
     vbox.addWidget(WWLabel(_("Public Key")))
     vbox.addWidget(pk)
 
-    addr = ShowQRTextEdit(genaddr(pubkey.encode(), 'testnet'), config=win.config)
+    addr = ShowQRTextEdit(genaddr(bytes.fromhex(pubkey), 'testnet'), config=win.config)
     addr.setMaximumHeight(150)
     addr.addCopyButton()
 
@@ -98,31 +96,24 @@ class Plugin(BasePlugin):
                                             "you can send transactionsas usual because the TXE sign automatically.\n") +
                                           _("You can create new watch-only wallet and transfer your coins to it.\n") +
                                           _("Create new key pairs?"))
-            # if choice:
-            #     f, p = create_pwd(main_window)
-            #     if not f:
-            #         return
-            #     pubkey = create_keypair(p)
-            #     show_pubkey(main_window, pubkey)
+            if choice:
+                f, p = create_pwd(main_window)
+                if not f:
+                    return
+                pubkey = create_keypair(p).lower()
+                show_pubkey(main_window, pubkey)
 
         else:
-            # p = '02f2dd109034c408433042ab0d237436ec62b5475ad87121ab607503c7d67d0895'
-            # pk = {
-            #     'type': 'imported',
-            #     'keypairs': {p: p},
-            # }
-            # wallet.db.put('keystore', pk)
             if wallet.wallet_type == 'imported':
                 wallet.txin_type = 'p2pkh'
                 if not keys:
-                    _, p = add_pubkey(main_window)
-                    if p:
+                    f, p = add_pubkey(main_window)
+                    if f:
                         pk = {
                             'type': 'imported',
                             'keypairs': {p: p},
                         }
                         wallet.db.put('keystore', pk)
-
 
         wallet.is_watching_only = MethodType(_Abstract_Wallet.is_watching_only, wallet)
 
