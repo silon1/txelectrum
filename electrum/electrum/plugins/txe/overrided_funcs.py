@@ -130,7 +130,7 @@ class _Abstract_Wallet:
         pk = self.db.get('keystore').get('keypairs')
         print(pk)
         if not pk:
-            raise electrum.e()
+            raise PublicKeyNotFoundException()
         for i in tx.inputs():
             i.pubkeys = [bytes.fromhex(k) for k in pk.keys()]
 
@@ -162,7 +162,6 @@ class _Software_KeyStore:
         Override Software_KeyStore sign_transaction
         """
         keypairs = self._get_tx_derivations(tx)
-
         if keypairs:
             tx.sign = MethodType(_PartialTransaction.sign, tx)
             tx.sign(keypairs)

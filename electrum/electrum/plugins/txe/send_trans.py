@@ -42,9 +42,15 @@ class TX:
         utxo = ith(len(self.txins))
         for i in self.txins:
             utxo += lendian(i['prevout_hash'])
-            utxo += ith(i['prevout_n'], True, TX.sat_zf)
-            for _, sig in i['part_sigs'].items():
-                utxo += sig
+            utxo += ith(i['prevout_n'], True, zf=TX.txin_index_zf)
+            sig = ''
+            for k, s in i['part_sigs'].items():
+                sig += lth(s)
+                sig += s
+                sig += lth(k)
+                sig += k
+                sig = lth(sig) + sig
+            utxo += sig
             utxo += TX.flags
         return utxo
 
@@ -52,7 +58,7 @@ class TX:
         s = ith(len(self.txouts))
         for o in self.txouts:
             s += ith(o['value_sats'], True, TX.sat_zf)
-            s += ith(len(o['scriptpubkey']), zf=2)
+            s += lth(o['scriptpubkey'], zf=2)
             s += o['scriptpubkey']
         return s
 
@@ -77,3 +83,7 @@ def ith(i, little=False, zf=0):
     x = '0' * (len(s := hex(i)[2:]) % 2) + s
     x = x.zfill(zf) if zf else x
     return lendian(x) if little else x
+
+
+def lth(s, zf=2):
+    return ith(int(len(s) // 2), True, zf)
