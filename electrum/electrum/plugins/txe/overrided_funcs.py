@@ -29,7 +29,7 @@ class _ConfirmTxDialog:
 
 
 class PublicKeyNotFoundException(Exception):
-    def __init__(self, msg):
+    def __init__(self, msg="publickey not found"):
         super().__init__(msg)
 
 
@@ -86,8 +86,6 @@ class _SendTab:
 
         cancelled, is_send, password, tx = conf_dlg.run()
         Pwd.p = password
-        if cancelled:
-            raise PublicKeyNotFoundException()
         if is_send:
             self.save_pending_invoice()
 
@@ -128,7 +126,6 @@ class _Abstract_Wallet:
             return
 
         pk = self.db.get('keystore').get('keypairs')
-        print(pk)
         if not pk:
             raise PublicKeyNotFoundException()
         for i in tx.inputs():
