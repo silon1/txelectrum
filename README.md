@@ -32,7 +32,7 @@ To bulid and run electrum, you have to complete the following steps:
 4. Run `$ python ./electrum/run_electrum [--testnet]`
 
 #### Use already installed electrum
-Just copy the files at `/electrum/electrum/plugins/txe` into the instalation folder. (**Note: This wasn't tested.**)
+Just copy the files at `./electrum/electrum/plugins/txe` into the instalation folder. (**Note: This wasn't tested.**)
 
 ---
 ## How to use
