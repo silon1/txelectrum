@@ -79,7 +79,7 @@ def txe_sign(buffer:bytes, password:str, pubkey:bytes) -> bytes:
     """
 
     hashed_password = hashlib.sha1(password.encode()).hexdigest()
-    hashed_buffer = hashlib.sha256(buffer).hexdigest()
+    hashed_buffer = buffer.hex()
 
     req_body = {
         "public_key": pubkey,
