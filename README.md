@@ -36,5 +36,26 @@ Just copy the files at `./electrum/electrum/plugins/txe` into the instalation fo
 
 ---
 ## How to use
+This project implements the following features:
+* Create a wallet in the TXE.
+* Sign a transaction from the TXE.
 
-Create/open a standard wallet, activates the plugin, and reopen Electrum.  
+**Note: The plugin is a proof of concept, hence we haven't developed the user experience.**
+
+### Create a wallet
+Complete the following steps to create a new wallet:
+1. Create a new dummy standard wallet.
+2. Press `yes` button on the new window to create a new wallet inside the TXE.
+3. Enter a new password for the new wallet.
+4. Copy the public key and the bitcoin address from the new window.
+5. Create a new imported address wallet (`File > New/Restore`).
+6. Paste the copied bitcoin address.
+
+### Sign a transaction
+Complete the following steps to sign and broadcast a transaction:
+1. Go to `Send` tab.
+2. Insert the reciever bitcoin address and the amount to pay.
+3. Press `Pay` button.
+4. Enter the password.
+5. Press `Send` to sign and broadcast the transaction.
+6. Press `Close` on the new opened window.
