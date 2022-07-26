@@ -83,18 +83,26 @@ def show_pubkey(win, pubkey):
 
 
 class Plugin(BasePlugin):
+    wallet_type = 'imported'
+
     def __init__(self, parent, config: 'SimpleConfig', name):
         super().__init__(parent, config, name)
+
+    @staticmethod
+    def use_plugin(wallet_type):
+        return wallet_type == Plugin.wallet_type
 
     @hook
     def load_wallet(self, wallet: electrum.wallet.Abstract_Wallet, main_window: ElectrumWindow):
         keys = wallet.keystore
+        wtype = wallet.wallet_type
 
-        if any([hasattr(keys, 'seed'), hasattr(keys, 'xprv')]):
-            choice = main_window.question(_("This plugin affects only watch-only wallets.\n") +
-                                          _("Notice that even though the wallet type is watch-only,"
-                                            "you can send transactionsas usual because the TXE sign automatically.\n") +
-                                          _("You can create new watch-only wallet and transfer your coins to it.\n") +
+        if any([hasattr(keys, 'seed'), hasattr(keys, 'xprv')]) or not self.use_plugin(wtype):
+            choice = main_window.question(_("This plugin affects only on (address) imported wallets.\n") +
+                                          _("You can create new a (address) imported wallet and transfer your coins to it.\n\n") +
+                                          _("Notice that even though the wallet type is (address) imported, "
+                                            "you will be able to send transactions as usual because of the TXE sign "
+                                            "automatically.\n\n") +
                                           _("Create new key pairs?"))
             if choice:
                 f, p = create_pwd(main_window)
@@ -104,7 +112,7 @@ class Plugin(BasePlugin):
                 show_pubkey(main_window, pubkey)
 
         else:
-            if wallet.wallet_type == 'imported':
+            if self.use_plugin(wtype):
                 wallet.txin_type = 'p2pkh'
                 if not keys:
                     f, p = add_pubkey(main_window)
@@ -114,12 +122,12 @@ class Plugin(BasePlugin):
                             'keypairs': {p: p},
                         }
                         wallet.db.put('keystore', pk)
-
-        wallet.is_watching_only = MethodType(_Abstract_Wallet.is_watching_only, wallet)
+                wallet.is_watching_only = MethodType(_Abstract_Wallet.is_watching_only, wallet)
 
     @hook
     def abort_send(self, send_tab):
-        Pwd.send_tab = send_tab
+        if not self.use_plugin(send_tab.wallet.wallet_type):
+            return
         try:
             f = inspect.stack()[2]
             if f[3] != 'pay_onchain_dialog':
@@ -138,4 +146,6 @@ class Plugin(BasePlugin):
 
     @hook
     def tc_sign_wrapper(self, wallet: electrum.wallet.Standard_Wallet, tx, on_success, on_failure):
+        if not self.use_plugin(wallet.wallet_type):
+            return
         wallet.sign_transaction = MethodType(_Abstract_Wallet.sign_transaction, wallet)
