@@ -26,7 +26,7 @@ You have the following options to run the electrum TXE plugin:
 #### Build and run electrum
 To bulid and run electrum, you have to complete the following steps:
 1. Create python virtual environment at `./electrum`. (Optional)
-2. Follow the steps in [Electrum's Readme](./electrum/README.md). (Note: for windows users, we already compiled the file `./libsecp256k1-0.dll`)
+2. Follow the steps in [Electrum's Readme](./electrum/README.md) (Note: for windows users, we already compiled the file `./libsecp256k1-0.dll`).
 3. Install the requirements file at `./requirements.txt`.
 4. Install the requirements file at `./electrum/contrib/requirements/requirements.txt`.
 5. Run `$ python ./electrum/run_electrum [--testnet]`
