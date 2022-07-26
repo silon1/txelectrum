@@ -50,6 +50,8 @@ Complete the following steps to create a new wallet:
 4. Copy the public key and the bitcoin address from the new window.
 5. Create a new imported address wallet (`File > New/Restore`).
 6. Paste the copied bitcoin address.
+7. Enter a second password for the wallet.
+8. Enter the copied public key in the new opened window.
 
 ### Sign a transaction
 Complete the following steps to sign and broadcast a transaction:
