@@ -1,10 +1,40 @@
 # txelectrum
-plugin location: `electrum\electrum\plugins\txe`
 
-more requirements located in `electrum\contrib\requirements\`. You need them both.
+## Getting Started
+
+This project is built from two parts:
+1. Electrum plugin.
+2. secp256k1 signer server.
+
+### Build and run the secp256k1 signer server & applet
+
+**We assume you have already installed DAL.**
+
+To run the TXE signer server, you have to complete the following steps:
+1. Create python virtual environment at `./electrum`. (Optional)
+2. Open the applet project in Eclipse. (Project directory `./txe/secp256k1_signer`.)
+3. Build the applet. (Press on the shield button with the play icon.)
+4. Open the host project in Visual Studio. (Project directory `./txe/secp256k1_signer_server`.)
+5. Change the build configuration from `Debug` to `Amulet`.
+6. Build and run the host. (Press the play button.)
+
+### Build and run the electrum TXE plugin
+
+You have the following options to run the electrum TXE plugin:
+* Build and run the repository's electrum.
+* Use already installed electrum. (Note: it's not working on portable electrum.)
+
+#### Build and run electrum
+To bulid and run electrum, you have to complete the following steps:
+1. Follow the steps in [Electrum's Readme](./electrum/README.md).
+2. Install the requirements file at `./requirements.txt`.
+3. Install the requirements file at `./electrum/contrib/requirements/requirements.txt`.
+4. Run `$ python ./electrum/run_electrum [--testnet]`
+
+### Use already installed electrum
+Just copy the files at `/electrum/electrum/plugins/txe` into the instalation folder. (**Note: This wasn't tested.**)
 
 ---
 ## How to use
-If you already have electrum, copy `electrum\electrum\plugins\txe` to the plugins folder in your electrum.
 
-Else, move libsecp256k1-0.dll to `electrum\electrum`. Then create/open a standard wallet, activates the plugin, and reopen Electrum.  
+Create/open a standard wallet, activates the plugin, and reopen Electrum.  
